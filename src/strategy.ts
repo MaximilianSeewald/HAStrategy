@@ -230,7 +230,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          ...summaryItems.map((item) => createSummaryCard(item, dashboardRootPath)),
+          createSummaryRowsCard(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -290,7 +290,7 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
       {
         type: "heading",
         heading: floorName,
-        heading_style: "subtitle",
+        heading_style: "title",
         icon: floorAreas[0]?.floorIcon ?? "mdi:home-floor-0",
       },
       ...floorAreas
@@ -305,7 +305,7 @@ function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPa
     type: "button",
     name: area.title,
     icon: area.icon,
-    icon_height: "24px",
+    icon_height: "22px",
     show_icon: true,
     show_name: true,
     show_state: Boolean(area.stateEntityId),
@@ -368,26 +368,23 @@ function createDashboardSummaryItems(
   ];
 }
 
-function createSummaryCard(item: DashboardSummaryItem, dashboardRootPath: string): LovelaceCardConfig {
+function createSummaryRowsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
   return {
-    type: "button",
-    name: `${item.title} ${item.subtitle}`,
-    icon: item.icon,
-    icon_height: "22px",
-    show_icon: true,
-    show_name: true,
-    grid_options: {
-      columns: "full",
-      rows: 1,
-    },
-    tap_action: item.path
-      ? {
-          action: "navigate",
-          navigation_path: createNavigationPath(dashboardRootPath, item.path),
-        }
-      : {
-          action: "none",
-        },
+    type: "entities",
+    show_header_toggle: false,
+    entities: items.map((item) => ({
+      type: "button",
+      name: `${item.title} ${item.subtitle}`,
+      icon: item.icon,
+      tap_action: item.path
+        ? {
+            action: "navigate",
+            navigation_path: createNavigationPath(dashboardRootPath, item.path),
+          }
+        : {
+            action: "none",
+          },
+    })),
   };
 }
 
@@ -398,9 +395,11 @@ function getAreaTemperatureEntityId(
   entities: EntityRegistryEntry[],
   entityFilter: ResolvedEntityFilterConfig,
 ): string | undefined {
-  return getEntitiesForArea({ area, devices, entities, entity_filter: entityFilter }).find((entityId) =>
-    Number.isFinite(getEntityTemperature(hass, entityId)),
-  );
+  return getEntitiesForArea({ area, devices, entities, entity_filter: entityFilter }).find((entityId) => {
+    const state = hass.states[entityId];
+
+    return entityId.startsWith("sensor.") && state?.attributes.device_class === "temperature" && Number.isFinite(getEntityTemperature(hass, entityId));
+  });
 }
 
 function createEntityCategoryViews(
@@ -487,7 +486,7 @@ function createLocatedEntitySections(
         {
           type: "heading",
           heading: floorName,
-          heading_style: "subtitle",
+          heading_style: "title",
           icon: floorLocation?.floorIcon ?? "mdi:home-floor-0",
         },
       ];
