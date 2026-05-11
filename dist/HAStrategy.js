@@ -109,4 +109,4 @@ function _() {
   });
 }
 _();
-//# sourceMappingURL=ha-dashboard-strategy.js.map
+//# sourceMappingURL=HAStrategy.js.map
