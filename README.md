@@ -4,11 +4,12 @@ A TypeScript Home Assistant dashboard strategy that creates a polished, room-fir
 
 The strategy creates:
 
-- a Home overview with category and room navigation
+- a Dashboard overview with floor-grouped room navigation and category summaries
 - a Shopping category that embeds the Ktor shopping-list Lovelace card
 - optional custom category views that can be extended from strategy YAML
-- one section-style view per Home Assistant area
+- hidden room subviews for each Home Assistant area
 - grouped room cards for lights, climate, security, media, sensors, and other entities
+- default filtering for Home Assistant configuration and diagnostic entities
 - Home Assistant 2026.5 community dashboard metadata through `window.customStrategies`
 
 ## Strategy Config
@@ -31,6 +32,10 @@ strategy:
     title: Shopping
     addon_slug: ktor_app
     show_completed: true
+  entity_filter:
+    hide_entity_categories:
+      - config
+      - diagnostic
   categories:
     - id: custom-category
       title: Custom Category
@@ -38,6 +43,30 @@ strategy:
       cards:
         - type: markdown
           content: "Custom cards go here"
+```
+
+The top navigation contains only Dashboard, Shopping, and custom categories. Rooms are generated as subviews and are opened from the Dashboard room tiles.
+
+### Entity Filtering
+
+By default, the strategy hides entity registry entries in Home Assistant's configuration and diagnostic categories:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  entity_filter:
+    hide_entity_categories:
+      - config
+      - diagnostic
+```
+
+Show those entities again by setting an empty list:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  entity_filter:
+    hide_entity_categories: []
 ```
 
 ### Shopping Category

@@ -22,11 +22,20 @@ export interface AreaRegistryEntry {
   area_id: string;
   name: string;
   icon?: string | null;
+  floor_id?: string | null;
+}
+
+export interface FloorRegistryEntry {
+  floor_id: string;
+  name: string;
+  icon?: string | null;
+  level?: number | null;
 }
 
 export interface DeviceRegistryEntry {
   id: string;
   area_id?: string | null;
+  floor_id?: string | null;
 }
 
 export interface EntityRegistryEntry {
@@ -35,6 +44,7 @@ export interface EntityRegistryEntry {
   device_id?: string | null;
   hidden_by?: string | null;
   disabled_by?: string | null;
+  entity_category?: string | null;
 }
 
 export interface LovelaceCardConfig {
