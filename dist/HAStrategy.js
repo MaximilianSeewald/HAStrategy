@@ -1,11 +1,11 @@
-const g = "max-home-dashboard", I = [
+const g = "max-home-dashboard", F = "0.2.1", I = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
   { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" }
-], F = I.filter((e) => e.path), k = ["config", "diagnostic"];
+], V = I.filter((e) => e.path), k = ["config", "diagnostic"];
 class D extends HTMLElement {
   static getCreateSuggestions(n) {
     return {
@@ -18,7 +18,7 @@ class D extends HTMLElement {
       t.callWS({ type: "config/area_registry/list" }),
       t.callWS({ type: "config/device_registry/list" }),
       t.callWS({ type: "config/entity_registry/list" })
-    ]), s = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), c = ae(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), a = j(n), m = /* @__PURE__ */ new Set(["dashboard", ...a.map((u) => u.path).filter(Boolean)]), d = V(l, s, o, r, c, t, m), h = B(r, c).map((u) => u.entity_id).filter((u) => t.states[u]), p = C(t, h), f = U(t, p, r, l, o, s, m), T = z([
+    ]), s = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), c = se(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), a = X(n), m = /* @__PURE__ */ new Set(["dashboard", ...a.map((u) => u.path).filter(Boolean)]), d = G(l, s, o, r, c, t, m), h = T(r, c).map((u) => u.entity_id).filter((u) => t.states[u]), p = R(t, h), f = Y(t, p, r, l, o, s, m), B = j([
       "dashboard",
       ...a.map((u) => u.path).filter((u) => !!u),
       ...f.views.map((u) => u.path).filter((u) => !!u),
@@ -27,7 +27,7 @@ class D extends HTMLElement {
     return {
       title: n.title ?? "Max Home",
       views: [
-        W(t, d, a, p, f.pathByKey, T),
+        W(t, d, a, p, f.pathByKey, B),
         ...a,
         ...f.views,
         ...l.map((u, _) => {
@@ -56,12 +56,12 @@ class H extends HTMLElement {
   static async generate(n, t) {
     const i = $(n).filter((o) => t.states[o]).sort((o, r) => N(t, o).localeCompare(N(t, r)));
     return {
-      sections: J(t, n.area, i)
+      sections: Q(t, n.area, i)
     };
   }
 }
 function W(e, n, t, i, o, r) {
-  const s = e.config.location_name ?? "Home", c = P(n, r), l = L(e, t, i, o);
+  const s = e.config.location_name ?? "Home", c = O(n, r), l = L(e, t, i, o);
   return {
     title: "Dashboard",
     path: "dashboard",
@@ -96,13 +96,13 @@ function W(e, n, t, i, o, r) {
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline"
           },
-          ...l.map((a) => O(a, r))
+          ...l.map((a) => K(a, r))
         ]
       }
     ].filter((a) => a.cards.length > 0)
   };
 }
-function V(e, n, t, i, o, r, s) {
+function G(e, n, t, i, o, r, s) {
   const c = new Map(n.map((a) => [a.floor_id, a])), l = new Map(
     n.slice().sort(x).map((a, m) => [a.floor_id, m])
   );
@@ -112,7 +112,7 @@ function V(e, n, t, i, o, r, s) {
       title: a.name,
       path: m,
       icon: a.icon ?? "mdi:floor-plan",
-      stateEntityId: K(r, a, t, i, o),
+      stateEntityId: U(r, a, t, i, o),
       floorId: a.floor_id,
       floorName: (d == null ? void 0 : d.name) ?? "Weitere Räume",
       floorIcon: (d == null ? void 0 : d.icon) ?? "mdi:home-floor-0",
@@ -120,7 +120,7 @@ function V(e, n, t, i, o, r, s) {
     };
   });
 }
-function P(e, n) {
+function O(e, n) {
   const t = /* @__PURE__ */ new Map();
   for (const i of e) {
     const o = i.floorName ?? "Weitere Räume";
@@ -138,11 +138,11 @@ function P(e, n) {
         heading_style: "subtitle",
         icon: ((r = o[0]) == null ? void 0 : r.floorIcon) ?? "mdi:home-floor-0"
       },
-      ...o.slice().sort((s, c) => s.title.localeCompare(c.title)).map((s) => G(s, n))
+      ...o.slice().sort((s, c) => s.title.localeCompare(c.title)).map((s) => P(s, n))
     ];
   });
 }
-function G(e, n) {
+function P(e, n) {
   const t = {
     type: "button",
     name: e.title,
@@ -172,32 +172,32 @@ function L(e, n, t, i) {
   return [
     {
       title: "Beleuchtung",
-      subtitle: te(e, t.lights),
+      subtitle: ie(e, t.lights),
       path: i.lights,
       icon: "mdi:lamps-outline"
     },
     {
       title: "Raumklima",
-      subtitle: ie(e, t.climate),
+      subtitle: ne(e, t.climate),
       path: i.climate,
       icon: "mdi:home-thermometer-outline"
     },
     {
       title: "Sicherheit",
-      subtitle: ne(e, t.security),
+      subtitle: oe(e, t.security),
       path: i.security,
       icon: "mdi:shield-home-outline"
     },
     {
       title: "Mediaplayer",
-      subtitle: oe(e, t.media),
+      subtitle: re(e, t.media),
       path: i.media,
       icon: "mdi:music-box-outline"
     },
     ...o
   ];
 }
-function O(e, n) {
+function K(e, n) {
   return {
     type: "button",
     name: `${e.title} ${e.subtitle}`,
@@ -217,14 +217,14 @@ function O(e, n) {
     }
   };
 }
-function K(e, n, t, i, o) {
+function U(e, n, t, i, o) {
   return $({ area: n, devices: t, entities: i, entity_filter: o }).find(
-    (r) => Number.isFinite(R(e, r))
+    (r) => Number.isFinite(C(e, r))
   );
 }
-function U(e, n, t, i, o, r, s) {
-  const c = q(t, i, o, r), l = {};
-  return { views: F.map((m) => {
+function Y(e, n, t, i, o, r, s) {
+  const c = z(t, i, o, r), l = {};
+  return { views: V.map((m) => {
     const d = v(m.path, s);
     return l[m.key] = d, {
       title: S(m.key),
@@ -233,7 +233,7 @@ function U(e, n, t, i, o, r, s) {
       subview: !0,
       type: "sections",
       max_columns: 3,
-      sections: n[m.key].length > 0 ? Y(e, { ...m, title: S(m.key) }, n[m.key], c) : [
+      sections: n[m.key].length > 0 ? q(e, { ...m, title: S(m.key) }, n[m.key], c) : [
         {
           type: "grid",
           cards: [
@@ -247,7 +247,7 @@ function U(e, n, t, i, o, r, s) {
     };
   }), pathByKey: l };
 }
-function Y(e, n, t, i) {
+function q(e, n, t, i) {
   const o = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map();
   for (const s of t) {
     const c = i.get(s) ?? {
@@ -285,7 +285,7 @@ function Y(e, n, t, i) {
     ];
   });
 }
-function q(e, n, t, i) {
+function z(e, n, t, i) {
   const o = new Map(n.map((l) => [l.area_id, l])), r = new Map(t.map((l) => [l.id, l])), s = new Map(i.map((l) => [l.floor_id, l])), c = new Map(
     i.slice().sort(x).map((l, a) => [l.floor_id, a])
   );
@@ -320,7 +320,7 @@ function S(e) {
       return "Sonstige";
   }
 }
-function z(e) {
+function j(e) {
   const t = window.location.pathname.replace(/\/+$/g, "").split("/").filter(Boolean);
   if (t.length === 0)
     return "";
@@ -331,10 +331,10 @@ function A(e, n) {
   const t = e.replace(/\/+$/g, ""), i = n.replace(/^\/+/g, "");
   return `${t}/${i}`;
 }
-function j(e) {
+function X(e) {
   var t;
   const n = [];
-  ((t = e.shopping) == null ? void 0 : t.enabled) !== !1 && n.push(X(e.shopping));
+  ((t = e.shopping) == null ? void 0 : t.enabled) !== !1 && n.push(J(e.shopping));
   for (const i of e.categories ?? [])
     !i.id || !i.title || !Array.isArray(i.cards) || n.push({
       title: i.title,
@@ -349,9 +349,9 @@ function j(e) {
         }
       ]
     });
-  return re(n, ["dashboard"]);
+  return ae(n, ["dashboard"]);
 }
-function X(e = {}) {
+function J(e = {}) {
   const n = {
     type: "custom:ktor-shopping-list-card",
     title: "Shopping List",
@@ -366,7 +366,7 @@ function X(e = {}) {
     cards: [n]
   };
 }
-function J(e, n, t) {
+function Q(e, n, t) {
   if (t.length === 0)
     return [
       {
@@ -379,14 +379,14 @@ function J(e, n, t) {
         ]
       }
     ];
-  const i = C(e, t), o = [];
+  const i = R(e, t), o = [];
   for (const r of I) {
     const s = i[r.key];
-    s.length !== 0 && o.push(Q(e, r, s));
+    s.length !== 0 && o.push(Z(e, r, s));
   }
   return o;
 }
-function Q(e, n, t, i = !0) {
+function Z(e, n, t, i = !0) {
   const o = i ? [
     {
       type: "heading",
@@ -401,7 +401,7 @@ function Q(e, n, t, i = !0) {
   };
 }
 function M(e, n) {
-  const t = n.filter(w), i = e ? n.filter((c) => Z(e, c)) : [], o = n.filter(
+  const t = n.filter(w), i = e ? n.filter((c) => ee(e, c)) : [], o = n.filter(
     (c) => !w(c) && !i.includes(c) && E(c)
   ), r = n.filter(
     (c) => !w(c) && !i.includes(c) && !E(c)
@@ -456,12 +456,12 @@ function E(e) {
 function w(e) {
   return e.split(".")[0] === "camera";
 }
-function Z(e, n) {
+function ee(e, n) {
   var o;
   const t = n.split(".")[0] ?? "", i = String(((o = e.states[n]) == null ? void 0 : o.attributes.device_class) ?? "");
   return t === "sensor" && ["temperature", "humidity"].includes(i);
 }
-function C(e, n) {
+function R(e, n) {
   const t = {
     lights: [],
     climate: [],
@@ -471,26 +471,26 @@ function C(e, n) {
     other: []
   };
   for (const i of n)
-    t[ee(e, i)].push(i);
+    t[te(e, i)].push(i);
   return t;
 }
-function ee(e, n) {
+function te(e, n) {
   var o;
   const t = n.split(".")[0] ?? "", i = (o = e.states[n]) == null ? void 0 : o.attributes.device_class;
   return t === "light" || t === "switch" || t === "cover" ? "lights" : ["climate", "fan", "humidifier", "water_heater"].includes(t) || ["temperature", "humidity"].includes(String(i)) ? "climate" : ["alarm_control_panel", "binary_sensor", "camera", "lock"].includes(t) ? "security" : ["media_player", "remote", "vacuum"].includes(t) ? "media" : t === "sensor" || ["temperature", "humidity", "illuminance", "power", "energy", "battery"].includes(String(i)) ? "sensors" : "other";
 }
-function te(e, n) {
+function ie(e, n) {
   const t = n.filter((i) => {
     var o;
     return ["on", "open", "opening"].includes(((o = e.states[i]) == null ? void 0 : o.state) ?? "");
   }).length;
   return t === 0 ? "Alle aus" : `${t} aktiv`;
 }
-function ie(e, n) {
-  const t = n.map((o) => R(e, o)).filter((o) => Number.isFinite(o));
+function ne(e, n) {
+  const t = n.map((o) => C(e, o)).filter((o) => Number.isFinite(o));
   return t.length === 0 ? "Keine Werte" : `${(t.reduce((o, r) => o + r, 0) / t.length).toFixed(1).replace(".", ",")}°`;
 }
-function ne(e, n) {
+function oe(e, n) {
   const t = n.filter(
     (i) => {
       var o;
@@ -499,14 +499,14 @@ function ne(e, n) {
   ).length;
   return t === 0 ? "Alles ruhig" : `${t} aktiv`;
 }
-function oe(e, n) {
+function re(e, n) {
   const t = n.filter((i) => {
     var o;
     return ((o = e.states[i]) == null ? void 0 : o.state) === "playing";
   }).length;
   return t === 0 ? "Keine Wiedergabe" : `${t} Wiedergabe`;
 }
-function R(e, n) {
+function C(e, n) {
   const t = e.states[n], i = ["current_temperature", "temperature"];
   for (const o of i) {
     const r = t == null ? void 0 : t.attributes[o];
@@ -522,7 +522,7 @@ function R(e, n) {
 function x(e, n) {
   return typeof e.level == "number" && typeof n.level == "number" && e.level !== n.level ? e.level - n.level : typeof e.level == "number" ? -1 : typeof n.level == "number" ? 1 : e.name.localeCompare(n.name);
 }
-function re(e, n = []) {
+function ae(e, n = []) {
   const t = new Set(n);
   return e.map((i) => {
     const o = y(i.path ?? i.title);
@@ -545,15 +545,15 @@ function $(e) {
   }, t = new Set(
     e.devices.filter((i) => i.area_id === e.area.area_id).map((i) => i.id)
   );
-  return B(e.entities, n).filter(
+  return T(e.entities, n).filter(
     (i) => i.area_id === e.area.area_id || !i.area_id && i.device_id !== null && i.device_id !== void 0 && t.has(i.device_id)
   ).map((i) => i.entity_id);
 }
-function B(e, n) {
+function T(e, n) {
   const t = new Set(n.hide_entity_categories);
   return e.filter((i) => !i.hidden_by && !i.disabled_by).filter((i) => !i.entity_category || !t.has(i.entity_category));
 }
-function ae(e) {
+function se(e) {
   var t;
   const n = (t = e.entity_filter) == null ? void 0 : t.hide_entity_categories;
   return {
@@ -567,14 +567,14 @@ function N(e, n) {
 function y(e) {
   return e.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
-function se() {
+function ce() {
   customElements.define(`ll-strategy-dashboard-${g}`, D), customElements.define(`ll-strategy-view-${g}`, H), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
     type: g,
     strategyType: "dashboard",
     name: "Max Home",
-    description: "Generates an area-based Home Assistant dashboard.",
+    description: `Generates an area-based Home Assistant dashboard. Version ${F}.`,
     documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-strategy/"
   });
 }
-se();
+ce();
 //# sourceMappingURL=HAStrategy.js.map

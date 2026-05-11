@@ -11,6 +11,7 @@ import type {
 } from "./home-assistant";
 
 const STRATEGY_TYPE = "max-home-dashboard";
+const STRATEGY_VERSION = "0.2.1";
 
 interface DashboardStrategyConfig {
   title?: string;
@@ -1010,7 +1011,7 @@ export function registerStrategies(): void {
     type: STRATEGY_TYPE,
     strategyType: "dashboard",
     name: "Max Home",
-    description: "Generates an area-based Home Assistant dashboard.",
+    description: `Generates an area-based Home Assistant dashboard. Version ${STRATEGY_VERSION}.`,
     documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-strategy/",
   });
 }
