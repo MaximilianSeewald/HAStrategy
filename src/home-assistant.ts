@@ -42,12 +42,19 @@ export interface LovelaceCardConfig {
   [key: string]: unknown;
 }
 
+export interface LovelaceSectionConfig {
+  type: string;
+  cards: LovelaceCardConfig[];
+  [key: string]: unknown;
+}
+
 export interface LovelaceViewConfig {
   title: string;
   path?: string;
   icon?: string;
   type?: string;
   cards?: LovelaceCardConfig[];
+  sections?: LovelaceSectionConfig[];
   strategy?: StrategyConfig;
   [key: string]: unknown;
 }

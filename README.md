@@ -1,13 +1,96 @@
 # Max Home Dashboard Strategy
 
-A TypeScript starter project for building a custom Home Assistant dashboard strategy.
+A TypeScript Home Assistant dashboard strategy that creates a polished, room-first dashboard with native Lovelace cards.
 
-The initial strategy creates:
+The strategy creates:
 
-- an overview view
-- one view per Home Assistant area
-- an entities card in each area view for visible entities assigned to that area
+- a Home overview with category and room navigation
+- a Shopping category that embeds the Ktor shopping-list Lovelace card
+- optional custom category views that can be extended from strategy YAML
+- one section-style view per Home Assistant area
+- grouped room cards for lights, climate, security, media, sensors, and other entities
 - Home Assistant 2026.5 community dashboard metadata through `window.customStrategies`
+
+## Strategy Config
+
+Basic dashboard:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+```
+
+Full example:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  title: Max Home
+  shopping:
+    enabled: true
+    title: Shopping
+    addon_slug: ktor_app
+    show_completed: true
+  categories:
+    - id: custom-category
+      title: Custom Category
+      icon: mdi:star-outline
+      cards:
+        - type: markdown
+          content: "Custom cards go here"
+```
+
+### Shopping Category
+
+The Shopping category is enabled by default and uses the Ktor shopping-list card:
+
+```yaml
+type: custom:ktor-shopping-list-card
+title: Shopping List
+addon_slug: ktor_app
+show_completed: true
+```
+
+Install the card separately from the KtorFramework repository through HACS as a dashboard resource:
+
+```yaml
+resources:
+  - url: /hacsfiles/KtorFramework/KtorFramework.js
+    type: module
+```
+
+Disable the built-in Shopping category:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  shopping:
+    enabled: false
+```
+
+For custom deployments, provide a backend URL instead of the add-on slug:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  shopping:
+    backend_url: /api/hassio_ingress/CURRENT_GENERATED_INGRESS_PATH/
+```
+
+### Custom Categories
+
+Add future categories with the `categories` list. The `id` becomes the path unless `path` is provided, and `cards` are passed through as Lovelace card configs.
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  categories:
+    - id: energy
+      title: Energy
+      icon: mdi:lightning-bolt-outline
+      cards:
+        - type: energy-usage-graph
+```
 
 ## Development
 
