@@ -52,7 +52,7 @@ interface DashboardNavigationItem {
   title: string;
   path: string;
   icon: string;
-  subtitle?: string;
+  stateEntityId?: string;
   floorId?: string | null;
   floorName?: string;
   floorIcon?: string;
@@ -261,7 +261,7 @@ function createAreaNavigation(
       title: area.name,
       path,
       icon: area.icon ?? "mdi:floor-plan",
-      subtitle: getAreaTemperatureSummary(hass, area, devices, entities, entityFilter),
+      stateEntityId: getAreaTemperatureEntityId(hass, area, devices, entities, entityFilter),
       floorId: area.floor_id,
       floorName: floor?.name ?? "Weitere Räume",
       floorIcon: floor?.icon ?? "mdi:home-floor-0",
@@ -300,17 +300,29 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 }
 
 function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
-  const navigationPath = createNavigationPath(dashboardRootPath, area.path);
-  const subtitle = area.subtitle ? `<br><span style="font-size: 12px; font-weight: 600;">${escapeHtml(area.subtitle)}</span>` : "";
-
-  return {
-    type: "markdown",
-    content: `<a href="${escapeHtml(navigationPath)}" style="color: inherit; display: block; min-height: 94px; padding-top: 10px; text-align: center; text-decoration: none;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color));"></ha-icon><br><br><span style="font-size: 12px; font-weight: 700; line-height: 1.2;">${escapeHtml(area.title)}</span>${subtitle}</a>`,
+  const card: LovelaceCardConfig = {
+    type: "button",
+    name: area.title,
+    icon: area.icon,
+    icon_height: "24px",
+    show_icon: true,
+    show_name: true,
+    show_state: Boolean(area.stateEntityId),
     grid_options: {
       columns: 4,
       rows: 2,
     },
+    tap_action: {
+      action: "navigate",
+      navigation_path: createNavigationPath(dashboardRootPath, area.path),
+    },
   };
+
+  if (area.stateEntityId) {
+    card.entity = area.stateEntityId;
+  }
+
+  return card;
 }
 
 function createDashboardSummaryItems(
@@ -356,37 +368,38 @@ function createDashboardSummaryItems(
 }
 
 function createSummaryCard(item: DashboardSummaryItem, dashboardRootPath: string): LovelaceCardConfig {
-  const navigationPath = item.path ? createNavigationPath(dashboardRootPath, item.path) : undefined;
-  const content = `<a href="${escapeHtml(navigationPath ?? "#")}" style="align-items: center; color: inherit; display: flex; gap: 14px; min-height: 48px; text-decoration: none;"><ha-icon icon="${escapeHtml(item.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color)); flex: 0 0 auto;"></ha-icon><span style="display: flex; flex-direction: column; line-height: 1.2;"><strong style="font-size: 13px;">${escapeHtml(item.title)}</strong><span style="font-size: 12px;">${escapeHtml(item.subtitle)}</span></span></a>`;
-
   return {
-    type: "markdown",
-    content,
+    type: "button",
+    name: `${item.title} ${item.subtitle}`,
+    icon: item.icon,
+    icon_height: "22px",
+    show_icon: true,
+    show_name: true,
     grid_options: {
       columns: "full",
       rows: 1,
     },
+    tap_action: item.path
+      ? {
+          action: "navigate",
+          navigation_path: createNavigationPath(dashboardRootPath, item.path),
+        }
+      : {
+          action: "none",
+        },
   };
 }
 
-function getAreaTemperatureSummary(
+function getAreaTemperatureEntityId(
   hass: HomeAssistant,
   area: AreaRegistryEntry,
   devices: DeviceRegistryEntry[],
   entities: EntityRegistryEntry[],
   entityFilter: ResolvedEntityFilterConfig,
 ): string | undefined {
-  const temperatures = getEntitiesForArea({ area, devices, entities, entity_filter: entityFilter })
-    .map((entityId) => getEntityTemperature(hass, entityId))
-    .filter((temperature): temperature is number => Number.isFinite(temperature));
-
-  if (temperatures.length === 0) {
-    return undefined;
-  }
-
-  const average = temperatures.reduce((sum, temperature) => sum + temperature, 0) / temperatures.length;
-
-  return `${average.toFixed(1).replace(".", ",")} °C`;
+  return getEntitiesForArea({ area, devices, entities, entity_filter: entityFilter }).find((entityId) =>
+    Number.isFinite(getEntityTemperature(hass, entityId)),
+  );
 }
 
 function createEntityCategoryViews(
