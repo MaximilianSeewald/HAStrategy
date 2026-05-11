@@ -300,37 +300,17 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 }
 
 function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
-  const name = area.subtitle ? `${area.title}\n${area.subtitle}` : area.title;
+  const navigationPath = createNavigationPath(dashboardRootPath, area.path);
+  const subtitle = area.subtitle
+    ? `<div style="font-size: 12px; line-height: 1.2; font-weight: 600; margin-top: 4px;">${escapeHtml(area.subtitle)}</div>`
+    : "";
 
   return {
-    type: "button",
-    name,
-    icon: area.icon,
-    icon_height: "24px",
-    show_icon: true,
-    show_name: true,
-    card_mod: {
-      style: `
-        ha-card {
-          --ha-card-border-radius: 8px;
-        }
-        #img-cell {
-          margin-bottom: 14px;
-        }
-        #name {
-          font-size: 12px;
-          line-height: 1.25;
-          white-space: pre-line;
-        }
-      `,
-    },
+    type: "markdown",
+    content: `<a href="${escapeHtml(navigationPath)}" style="align-items: center; color: inherit; display: flex; flex-direction: column; justify-content: center; min-height: 94px; text-align: center; text-decoration: none;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color)); margin-bottom: 22px;"></ha-icon><div style="font-size: 12px; font-weight: 700; line-height: 1.2;">${escapeHtml(area.title)}</div>${subtitle}</a>`,
     grid_options: {
       columns: 4,
       rows: 2,
-    },
-    tap_action: {
-      action: "navigate",
-      navigation_path: createNavigationPath(dashboardRootPath, area.path),
     },
   };
 }
