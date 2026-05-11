@@ -1,50 +1,50 @@
-const h = "max-home-dashboard", E = [
+const y = "max-home-dashboard", k = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
   { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" }
-], D = E.filter((e) => e.path), $ = ["config", "diagnostic"];
-class B extends HTMLElement {
-  static getCreateSuggestions(i) {
+], F = k.filter((e) => e.path), A = ["config", "diagnostic"];
+class D extends HTMLElement {
+  static getCreateSuggestions(n) {
     return {
       title: "Max Home",
       icon: "mdi:home-assistant"
     };
   }
-  static async generate(i, t) {
-    const [n, r, o] = await Promise.all([
+  static async generate(n, t) {
+    const [i, r, o] = await Promise.all([
       t.callWS({ type: "config/area_registry/list" }),
       t.callWS({ type: "config/device_registry/list" }),
       t.callWS({ type: "config/entity_registry/list" })
-    ]), s = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), l = re(i), u = n.filter((c) => c.area_id && c.name).sort((c, y) => c.name.localeCompare(y.name)), a = Y(i), m = /* @__PURE__ */ new Set(["dashboard", ...a.map((c) => c.path).filter(Boolean)]), d = P(u, s, r, o, l, t, m), F = T(o, l).map((c) => c.entity_id).filter((c) => t.states[c]), w = N(t, F), g = z(t, w, m), H = O([
+    ]), c = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), a = ae(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), s = j(n), m = /* @__PURE__ */ new Set(["dashboard", ...s.map((u) => u.path).filter(Boolean)]), d = V(l, c, r, o, a, t, m), h = T(o, a).map((u) => u.entity_id).filter((u) => t.states[u]), p = I(t, h), f = U(t, p, o, l, r, c, m), B = z([
       "dashboard",
-      ...a.map((c) => c.path).filter((c) => !!c),
-      ...g.views.map((c) => c.path).filter((c) => !!c),
-      ...d.map((c) => c.path)
+      ...s.map((u) => u.path).filter((u) => !!u),
+      ...f.views.map((u) => u.path).filter((u) => !!u),
+      ...d.map((u) => u.path)
     ]);
     return {
-      title: i.title ?? "Max Home",
+      title: n.title ?? "Max Home",
       views: [
-        I(t, d, a, w, g.pathByKey, H),
-        ...a,
-        ...g.views,
-        ...u.map((c, y) => {
-          const f = d[y];
+        W(t, d, s, p, f.pathByKey, B),
+        ...s,
+        ...f.views,
+        ...l.map((u, _) => {
+          const b = d[_];
           return {
-            title: c.name,
-            path: (f == null ? void 0 : f.path) ?? p(c.name || c.area_id),
-            icon: c.icon ?? void 0,
+            title: u.name,
+            path: (b == null ? void 0 : b.path) ?? g(u.name || u.area_id),
+            icon: u.icon ?? void 0,
             subview: !0,
             type: "sections",
             max_columns: 3,
             strategy: {
-              type: `custom:${h}`,
-              area: c,
+              type: `custom:${y}`,
+              area: u,
               devices: r,
               entities: o,
-              entity_filter: l
+              entity_filter: a
             }
           };
         })
@@ -52,16 +52,16 @@ class B extends HTMLElement {
     };
   }
 }
-class V extends HTMLElement {
-  static async generate(i, t) {
-    const n = M(i).filter((r) => t.states[r]).sort((r, o) => x(t, r).localeCompare(x(t, o)));
+class H extends HTMLElement {
+  static async generate(n, t) {
+    const i = $(n).filter((r) => t.states[r]).sort((r, o) => N(t, r).localeCompare(N(t, o)));
     return {
-      sections: j(t, i.area, n)
+      sections: J(t, n.area, i)
     };
   }
 }
-function I(e, i, t, n, r, o) {
-  const s = e.config.location_name ?? "Home", l = W(i, o), u = G(e, t, n, r);
+function W(e, n, t, i, r, o) {
+  const c = e.config.location_name ?? "Home", a = P(n, o), l = L(e, t, i, r);
   return {
     title: "Dashboard",
     path: "dashboard",
@@ -75,11 +75,16 @@ function I(e, i, t, n, r, o) {
         cards: [
           {
             type: "heading",
-            heading: `Willkommen ${s}`,
+            heading: `Willkommen ${c}`,
             heading_style: "title",
             icon: "mdi:home-heart"
           },
-          ...l
+          {
+            type: "heading",
+            heading: " ",
+            heading_style: "subtitle"
+          },
+          ...a
         ]
       },
       {
@@ -91,103 +96,107 @@ function I(e, i, t, n, r, o) {
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline"
           },
-          ...u.map((a) => K(a, o))
+          ...l.map((s) => O(s, o))
         ]
       }
-    ].filter((a) => a.cards.length > 0)
+    ].filter((s) => s.cards.length > 0)
   };
 }
-function P(e, i, t, n, r, o, s) {
-  const l = new Map(i.map((a) => [a.floor_id, a])), u = new Map(
-    i.slice().sort(ie).map((a, m) => [a.floor_id, m])
+function V(e, n, t, i, r, o, c) {
+  const a = new Map(n.map((s) => [s.floor_id, s])), l = new Map(
+    n.slice().sort(R).map((s, m) => [s.floor_id, m])
   );
-  return e.map((a) => {
-    const m = v(p(a.name || a.area_id), s), d = a.floor_id ? l.get(a.floor_id) : void 0;
+  return e.map((s) => {
+    const m = v(g(s.name || s.area_id), c), d = s.floor_id ? a.get(s.floor_id) : void 0;
     return {
-      title: a.name,
+      title: s.name,
       path: m,
-      icon: a.icon ?? "mdi:floor-plan",
-      subtitle: U(o, a, t, n, r),
-      floorId: a.floor_id,
+      icon: s.icon ?? "mdi:floor-plan",
+      subtitle: K(o, s, t, i, r),
+      floorId: s.floor_id,
       floorName: (d == null ? void 0 : d.name) ?? "Weitere Räume",
       floorIcon: (d == null ? void 0 : d.icon) ?? "mdi:home-floor-0",
-      sortIndex: a.floor_id ? u.get(a.floor_id) ?? i.length : i.length
+      sortIndex: s.floor_id ? l.get(s.floor_id) ?? n.length : n.length
     };
   });
 }
-function W(e, i) {
+function P(e, n) {
   const t = /* @__PURE__ */ new Map();
-  for (const n of e) {
-    const r = n.floorName ?? "Weitere Räume";
-    t.set(r, [...t.get(r) ?? [], n]);
+  for (const i of e) {
+    const r = i.floorName ?? "Weitere Räume";
+    t.set(r, [...t.get(r) ?? [], i]);
   }
-  return Array.from(t.entries()).sort(([, n], [, r]) => {
-    const o = n[0], s = r[0];
-    return ((o == null ? void 0 : o.sortIndex) ?? 0) - ((s == null ? void 0 : s.sortIndex) ?? 0) || ((o == null ? void 0 : o.floorName) ?? "").localeCompare((s == null ? void 0 : s.floorName) ?? "");
-  }).flatMap(([n, r]) => {
+  return Array.from(t.entries()).sort(([, i], [, r]) => {
+    const o = i[0], c = r[0];
+    return ((o == null ? void 0 : o.sortIndex) ?? 0) - ((c == null ? void 0 : c.sortIndex) ?? 0) || ((o == null ? void 0 : o.floorName) ?? "").localeCompare((c == null ? void 0 : c.floorName) ?? "");
+  }).flatMap(([i, r]) => {
     var o;
     return [
       {
         type: "heading",
-        heading: n,
+        heading: i,
         heading_style: "subtitle",
         icon: ((o = r[0]) == null ? void 0 : o.floorIcon) ?? "mdi:home-floor-0"
       },
-      ...r.slice().sort((s, l) => s.title.localeCompare(l.title)).map((s) => L(s, i))
+      ...r.slice().sort((c, a) => c.title.localeCompare(a.title)).map((c) => G(c, n))
     ];
   });
 }
-function L(e, i) {
-  const t = e.subtitle ? `<div style="font-size: 12px; line-height: 1.2; margin-top: 4px;">${b(e.subtitle)}</div>` : "";
+function G(e, n) {
   return {
-    type: "markdown",
-    content: `<div style="text-align: center; min-height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center;"><ha-icon icon="${b(e.icon)}" style="--mdc-icon-size: 28px;"></ha-icon><div style="font-size: 13px; font-weight: 600; line-height: 1.2; margin-top: 8px;">${b(e.title)}</div>${t}</div>`,
+    type: "button",
+    name: e.subtitle ? `${e.title}
+${e.subtitle}` : e.title,
+    icon: e.icon,
+    icon_height: "24px",
+    show_icon: !0,
+    show_name: !0,
     grid_options: {
       columns: 4,
       rows: 2
     },
     tap_action: {
       action: "navigate",
-      navigation_path: A(i, e.path)
+      navigation_path: M(n, e.path)
     }
   };
 }
-function G(e, i, t, n) {
-  const r = i.map((o) => ({
+function L(e, n, t, i) {
+  const r = n.map((o) => ({
     title: o.title,
     subtitle: "Öffnen",
-    path: o.path ?? p(o.title),
+    path: o.path ?? g(o.title),
     icon: o.icon ?? "mdi:shape-outline"
   }));
   return [
     {
       title: "Beleuchtung",
-      subtitle: X(e, t.lights),
-      path: n.lights,
+      subtitle: te(e, t.lights),
+      path: i.lights,
       icon: "mdi:lamps-outline"
     },
     {
       title: "Raumklima",
-      subtitle: Z(e, t.climate),
-      path: n.climate,
+      subtitle: ie(e, t.climate),
+      path: i.climate,
       icon: "mdi:home-thermometer-outline"
     },
     {
       title: "Sicherheit",
-      subtitle: ee(e, t.security),
-      path: n.security,
+      subtitle: ne(e, t.security),
+      path: i.security,
       icon: "mdi:shield-home-outline"
     },
     {
       title: "Mediaplayer",
-      subtitle: te(e, t.media),
-      path: n.media,
+      subtitle: re(e, t.media),
+      path: i.media,
       icon: "mdi:music-box-outline"
     },
     ...r
   ];
 }
-function K(e, i) {
+function O(e, n) {
   return {
     type: "button",
     name: `${e.title}
@@ -202,35 +211,28 @@ ${e.subtitle}`,
     },
     tap_action: e.path ? {
       action: "navigate",
-      navigation_path: A(i, e.path)
+      navigation_path: M(n, e.path)
     } : {
       action: "none"
     }
   };
 }
-function U(e, i, t, n, r) {
-  const o = M({ area: i, devices: t, entities: n, entity_filter: r }).map((l) => R(e, l)).filter((l) => Number.isFinite(l));
-  return o.length === 0 ? void 0 : `${(o.reduce((l, u) => l + u, 0) / o.length).toFixed(1).replace(".", ",")} °C`;
+function K(e, n, t, i, r) {
+  const o = $({ area: n, devices: t, entities: i, entity_filter: r }).map((a) => x(e, a)).filter((a) => Number.isFinite(a));
+  return o.length === 0 ? void 0 : `${(o.reduce((a, l) => a + l, 0) / o.length).toFixed(1).replace(".", ",")} °C`;
 }
-function z(e, i, t) {
-  const n = {};
-  return { views: D.map((o) => {
-    const s = v(o.path, t);
-    return n[o.key] = s, {
-      title: S(o.key),
-      path: s,
-      icon: o.icon,
+function U(e, n, t, i, r, o, c) {
+  const a = q(t, i, r, o), l = {};
+  return { views: F.map((m) => {
+    const d = v(m.path, c);
+    return l[m.key] = d, {
+      title: S(m.key),
+      path: d,
+      icon: m.icon,
       subview: !0,
       type: "sections",
       max_columns: 3,
-      sections: i[o.key].length > 0 ? [
-        C(
-          e,
-          { ...o, title: S(o.key) },
-          i[o.key],
-          !1
-        )
-      ] : [
+      sections: n[m.key].length > 0 ? Y(e, { ...m, title: S(m.key) }, n[m.key], a) : [
         {
           type: "grid",
           cards: [
@@ -242,7 +244,64 @@ function z(e, i, t) {
         }
       ]
     };
-  }), pathByKey: n };
+  }), pathByKey: l };
+}
+function Y(e, n, t, i) {
+  const r = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
+  for (const c of t) {
+    const a = i.get(c) ?? {
+      areaName: "Ohne Raum",
+      floorName: "Weitere Räume",
+      floorIcon: "mdi:home-floor-0",
+      sortIndex: Number.MAX_SAFE_INTEGER
+    }, l = r.get(a.floorName) ?? /* @__PURE__ */ new Map();
+    l.set(a.areaName, [...l.get(a.areaName) ?? [], c]), r.set(a.floorName, l), o.set(a.floorName, a);
+  }
+  return Array.from(r.entries()).sort(([c], [a]) => {
+    const l = o.get(c), s = o.get(a);
+    return ((l == null ? void 0 : l.sortIndex) ?? 0) - ((s == null ? void 0 : s.sortIndex) ?? 0) || c.localeCompare(a);
+  }).flatMap(([c, a]) => {
+    const l = o.get(c), s = [
+      {
+        type: "heading",
+        heading: c,
+        heading_style: "subtitle",
+        icon: (l == null ? void 0 : l.floorIcon) ?? "mdi:home-floor-0"
+      }
+    ];
+    for (const [m, d] of Array.from(a.entries()).sort(([h], [p]) => h.localeCompare(p)))
+      s.push({
+        type: "heading",
+        heading: m,
+        heading_style: "subtitle",
+        icon: "mdi:chevron-right"
+      }), s.push(...C(e, d));
+    return [
+      {
+        type: "grid",
+        cards: s
+      }
+    ];
+  });
+}
+function q(e, n, t, i) {
+  const r = new Map(n.map((l) => [l.area_id, l])), o = new Map(t.map((l) => [l.id, l])), c = new Map(i.map((l) => [l.floor_id, l])), a = new Map(
+    i.slice().sort(R).map((l, s) => [l.floor_id, s])
+  );
+  return new Map(
+    e.map((l) => {
+      const s = l.device_id ? o.get(l.device_id) : void 0, m = l.area_id ?? (s == null ? void 0 : s.area_id) ?? void 0, d = m ? r.get(m) : void 0, h = (d == null ? void 0 : d.floor_id) ?? (s == null ? void 0 : s.floor_id) ?? void 0, p = h ? c.get(h) : void 0;
+      return [
+        l.entity_id,
+        {
+          areaName: (d == null ? void 0 : d.name) ?? "Ohne Raum",
+          floorName: (p == null ? void 0 : p.name) ?? "Weitere Räume",
+          floorIcon: (p == null ? void 0 : p.icon) ?? "mdi:home-floor-0",
+          sortIndex: h ? a.get(h) ?? i.length : i.length
+        }
+      ];
+    })
+  );
 }
 function S(e) {
   switch (e) {
@@ -260,53 +319,53 @@ function S(e) {
       return "Sonstige";
   }
 }
-function O(e) {
+function z(e) {
   const t = window.location.pathname.replace(/\/+$/g, "").split("/").filter(Boolean);
   if (t.length === 0)
     return "";
-  const n = decodeURIComponent(t[t.length - 1] ?? "");
-  return e.includes(n) ? `/${t.slice(0, -1).join("/")}` : `/${t.join("/")}`;
+  const i = decodeURIComponent(t[t.length - 1] ?? "");
+  return e.includes(i) ? `/${t.slice(0, -1).join("/")}` : `/${t.join("/")}`;
 }
-function A(e, i) {
-  const t = e.replace(/\/+$/g, ""), n = i.replace(/^\/+/g, "");
-  return `${t}/${n}`;
+function M(e, n) {
+  const t = e.replace(/\/+$/g, ""), i = n.replace(/^\/+/g, "");
+  return `${t}/${i}`;
 }
-function Y(e) {
+function j(e) {
   var t;
-  const i = [];
-  ((t = e.shopping) == null ? void 0 : t.enabled) !== !1 && i.push(q(e.shopping));
-  for (const n of e.categories ?? [])
-    !n.id || !n.title || !Array.isArray(n.cards) || i.push({
-      title: n.title,
-      path: n.path ?? p(n.id),
-      icon: n.icon ?? "mdi:shape-outline",
+  const n = [];
+  ((t = e.shopping) == null ? void 0 : t.enabled) !== !1 && n.push(X(e.shopping));
+  for (const i of e.categories ?? [])
+    !i.id || !i.title || !Array.isArray(i.cards) || n.push({
+      title: i.title,
+      path: i.path ?? g(i.id),
+      icon: i.icon ?? "mdi:shape-outline",
       type: "sections",
       max_columns: 2,
       sections: [
         {
           type: "grid",
-          cards: n.cards
+          cards: i.cards
         }
       ]
     });
-  return ne(i, ["dashboard"]);
+  return oe(n, ["dashboard"]);
 }
-function q(e = {}) {
-  const i = {
+function X(e = {}) {
+  const n = {
     type: "custom:ktor-shopping-list-card",
     title: "Shopping List",
     addon_slug: e.addon_slug ?? "ktor_app",
     show_completed: e.show_completed ?? !0
   };
-  return e.backend_url && (delete i.addon_slug, i.backend_url = e.backend_url), {
+  return e.backend_url && (delete n.addon_slug, n.backend_url = e.backend_url), {
     title: e.title ?? "Shopping",
     path: e.path ?? "shopping",
     icon: e.icon ?? "mdi:cart-outline",
     panel: !0,
-    cards: [i]
+    cards: [n]
   };
 }
-function j(e, i, t) {
+function J(e, n, t) {
   if (t.length === 0)
     return [
       {
@@ -319,57 +378,61 @@ function j(e, i, t) {
         ]
       }
     ];
-  const n = N(e, t), r = [];
-  for (const o of E) {
-    const s = n[o.key];
-    s.length !== 0 && r.push(C(e, o, s));
+  const i = I(e, t), r = [];
+  for (const o of k) {
+    const c = i[o.key];
+    c.length !== 0 && r.push(Q(e, o, c));
   }
   return r;
 }
-function C(e, i, t, n = !0) {
-  const r = t.filter(_), o = e ? t.filter((a) => J(e, a)) : [], s = t.filter(
-    (a) => !_(a) && !o.includes(a) && k(a)
-  ), l = t.filter(
-    (a) => !_(a) && !o.includes(a) && !k(a)
-  ), u = n ? [
+function Q(e, n, t, i = !0) {
+  const r = i ? [
     {
       type: "heading",
-      heading: i.title,
+      heading: n.title,
       heading_style: "subtitle",
-      icon: i.icon
+      icon: n.icon
     }
   ] : [];
-  for (const a of r)
-    u.push({
+  return r.push(...C(e, t)), {
+    type: "grid",
+    cards: r
+  };
+}
+function C(e, n) {
+  const t = n.filter(w), i = e ? n.filter((a) => Z(e, a)) : [], r = n.filter(
+    (a) => !w(a) && !i.includes(a) && E(a)
+  ), o = n.filter(
+    (a) => !w(a) && !i.includes(a) && !E(a)
+  ), c = [];
+  for (const a of t)
+    c.push({
       type: "picture-entity",
       entity: a,
       camera_view: "live",
       show_name: !0,
       show_state: !1
     });
-  return o.length > 0 && u.push({
+  return i.length > 0 && c.push({
     type: "history-graph",
     hours_to_show: 24,
-    entities: o
-  }), s.length > 0 && u.push({
+    entities: i
+  }), r.length > 0 && c.push({
     type: "grid",
     columns: 2,
     square: !1,
-    cards: s.map((a) => ({
+    cards: r.map((a) => ({
       type: "tile",
       entity: a
     }))
-  }), l.length > 0 && u.push({
+  }), o.length > 0 && c.push({
     type: "entities",
     show_header_toggle: !1,
-    entities: l
-  }), {
-    type: "grid",
-    cards: u
-  };
+    entities: o
+  }), c;
 }
-function k(e) {
-  const i = e.split(".")[0] ?? "";
+function E(e) {
+  const n = e.split(".")[0] ?? "";
   return [
     "button",
     "climate",
@@ -387,17 +450,17 @@ function k(e) {
     "text",
     "vacuum",
     "water_heater"
-  ].includes(i);
+  ].includes(n);
 }
-function _(e) {
+function w(e) {
   return e.split(".")[0] === "camera";
 }
-function J(e, i) {
+function Z(e, n) {
   var r;
-  const t = i.split(".")[0] ?? "", n = String(((r = e.states[i]) == null ? void 0 : r.attributes.device_class) ?? "");
-  return t === "sensor" && ["temperature", "humidity"].includes(n);
+  const t = n.split(".")[0] ?? "", i = String(((r = e.states[n]) == null ? void 0 : r.attributes.device_class) ?? "");
+  return t === "sensor" && ["temperature", "humidity"].includes(i);
 }
-function N(e, i) {
+function I(e, n) {
   const t = {
     lights: [],
     climate: [],
@@ -406,45 +469,45 @@ function N(e, i) {
     sensors: [],
     other: []
   };
-  for (const n of i)
-    t[Q(e, n)].push(n);
+  for (const i of n)
+    t[ee(e, i)].push(i);
   return t;
 }
-function Q(e, i) {
+function ee(e, n) {
   var r;
-  const t = i.split(".")[0] ?? "", n = (r = e.states[i]) == null ? void 0 : r.attributes.device_class;
-  return t === "light" || t === "switch" || t === "cover" ? "lights" : ["climate", "fan", "humidifier", "water_heater"].includes(t) || ["temperature", "humidity"].includes(String(n)) ? "climate" : ["alarm_control_panel", "binary_sensor", "camera", "lock"].includes(t) ? "security" : ["media_player", "remote", "vacuum"].includes(t) ? "media" : t === "sensor" || ["temperature", "humidity", "illuminance", "power", "energy", "battery"].includes(String(n)) ? "sensors" : "other";
+  const t = n.split(".")[0] ?? "", i = (r = e.states[n]) == null ? void 0 : r.attributes.device_class;
+  return t === "light" || t === "switch" || t === "cover" ? "lights" : ["climate", "fan", "humidifier", "water_heater"].includes(t) || ["temperature", "humidity"].includes(String(i)) ? "climate" : ["alarm_control_panel", "binary_sensor", "camera", "lock"].includes(t) ? "security" : ["media_player", "remote", "vacuum"].includes(t) ? "media" : t === "sensor" || ["temperature", "humidity", "illuminance", "power", "energy", "battery"].includes(String(i)) ? "sensors" : "other";
 }
-function X(e, i) {
-  const t = i.filter((n) => {
+function te(e, n) {
+  const t = n.filter((i) => {
     var r;
-    return ["on", "open", "opening"].includes(((r = e.states[n]) == null ? void 0 : r.state) ?? "");
+    return ["on", "open", "opening"].includes(((r = e.states[i]) == null ? void 0 : r.state) ?? "");
   }).length;
   return t === 0 ? "Alle aus" : `${t} aktiv`;
 }
-function Z(e, i) {
-  const t = i.map((r) => R(e, r)).filter((r) => Number.isFinite(r));
+function ie(e, n) {
+  const t = n.map((r) => x(e, r)).filter((r) => Number.isFinite(r));
   return t.length === 0 ? "Keine Werte" : `${(t.reduce((r, o) => r + o, 0) / t.length).toFixed(1).replace(".", ",")}°`;
 }
-function ee(e, i) {
-  const t = i.filter(
-    (n) => {
+function ne(e, n) {
+  const t = n.filter(
+    (i) => {
       var r;
-      return ["on", "open", "opening", "unlocked", "triggered", "armed_away", "armed_home"].includes(((r = e.states[n]) == null ? void 0 : r.state) ?? "");
+      return ["on", "open", "opening", "unlocked", "triggered", "armed_away", "armed_home"].includes(((r = e.states[i]) == null ? void 0 : r.state) ?? "");
     }
   ).length;
   return t === 0 ? "Alles ruhig" : `${t} aktiv`;
 }
-function te(e, i) {
-  const t = i.filter((n) => {
+function re(e, n) {
+  const t = n.filter((i) => {
     var r;
-    return ((r = e.states[n]) == null ? void 0 : r.state) === "playing";
+    return ((r = e.states[i]) == null ? void 0 : r.state) === "playing";
   }).length;
   return t === 0 ? "Keine Wiedergabe" : `${t} Wiedergabe`;
 }
-function R(e, i) {
-  const t = e.states[i], n = ["current_temperature", "temperature"];
-  for (const r of n) {
+function x(e, n) {
+  const t = e.states[n], i = ["current_temperature", "temperature"];
+  for (const r of i) {
     const o = t == null ? void 0 : t.attributes[r];
     if (typeof o == "number")
       return o;
@@ -455,80 +518,62 @@ function R(e, i) {
       return r;
   }
 }
-function ie(e, i) {
-  return typeof e.level == "number" && typeof i.level == "number" && e.level !== i.level ? e.level - i.level : typeof e.level == "number" ? -1 : typeof i.level == "number" ? 1 : e.name.localeCompare(i.name);
+function R(e, n) {
+  return typeof e.level == "number" && typeof n.level == "number" && e.level !== n.level ? e.level - n.level : typeof e.level == "number" ? -1 : typeof n.level == "number" ? 1 : e.name.localeCompare(n.name);
 }
-function ne(e, i = []) {
-  const t = new Set(i);
-  return e.map((n) => {
-    const r = p(n.path ?? n.title);
+function oe(e, n = []) {
+  const t = new Set(n);
+  return e.map((i) => {
+    const r = g(i.path ?? i.title);
     return {
-      ...n,
+      ...i,
       path: v(r, t)
     };
   });
 }
-function v(e, i) {
-  const t = i instanceof Set ? i : new Set(i.filter(Boolean)), n = p(e || "view") || "view";
-  let r = n, o = 2;
+function v(e, n) {
+  const t = n instanceof Set ? n : new Set(n.filter(Boolean)), i = g(e || "view") || "view";
+  let r = i, o = 2;
   for (; t.has(r); )
-    r = `${n}-${o}`, o += 1;
+    r = `${i}-${o}`, o += 1;
   return t.add(r), r;
 }
-function M(e) {
-  const i = e.entity_filter ?? {
-    hide_entity_categories: $
+function $(e) {
+  const n = e.entity_filter ?? {
+    hide_entity_categories: A
   }, t = new Set(
-    e.devices.filter((n) => n.area_id === e.area.area_id).map((n) => n.id)
+    e.devices.filter((i) => i.area_id === e.area.area_id).map((i) => i.id)
   );
-  return T(e.entities, i).filter(
-    (n) => n.area_id === e.area.area_id || !n.area_id && n.device_id !== null && n.device_id !== void 0 && t.has(n.device_id)
-  ).map((n) => n.entity_id);
+  return T(e.entities, n).filter(
+    (i) => i.area_id === e.area.area_id || !i.area_id && i.device_id !== null && i.device_id !== void 0 && t.has(i.device_id)
+  ).map((i) => i.entity_id);
 }
-function T(e, i) {
-  const t = new Set(i.hide_entity_categories);
-  return e.filter((n) => !n.hidden_by && !n.disabled_by).filter((n) => !n.entity_category || !t.has(n.entity_category));
+function T(e, n) {
+  const t = new Set(n.hide_entity_categories);
+  return e.filter((i) => !i.hidden_by && !i.disabled_by).filter((i) => !i.entity_category || !t.has(i.entity_category));
 }
-function re(e) {
+function ae(e) {
   var t;
-  const i = (t = e.entity_filter) == null ? void 0 : t.hide_entity_categories;
+  const n = (t = e.entity_filter) == null ? void 0 : t.hide_entity_categories;
   return {
-    hide_entity_categories: Array.isArray(i) ? i : $
+    hide_entity_categories: Array.isArray(n) ? n : A
   };
 }
-function x(e, i) {
+function N(e, n) {
   var t;
-  return ((t = e.states[i]) == null ? void 0 : t.attributes.friendly_name) ?? i;
+  return ((t = e.states[n]) == null ? void 0 : t.attributes.friendly_name) ?? n;
 }
-function p(e) {
+function g(e) {
   return e.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
-function b(e) {
-  return e.replace(/[&<>"']/g, (i) => {
-    switch (i) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case '"':
-        return "&quot;";
-      case "'":
-        return "&#39;";
-      default:
-        return i;
-    }
-  });
-}
-function oe() {
-  customElements.define(`ll-strategy-dashboard-${h}`, B), customElements.define(`ll-strategy-view-${h}`, V), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
-    type: h,
+function se() {
+  customElements.define(`ll-strategy-dashboard-${y}`, D), customElements.define(`ll-strategy-view-${y}`, H), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
+    type: y,
     strategyType: "dashboard",
     name: "Max Home",
     description: "Generates an area-based Home Assistant dashboard.",
     documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-strategy/"
   });
 }
-oe();
+se();
 //# sourceMappingURL=HAStrategy.js.map

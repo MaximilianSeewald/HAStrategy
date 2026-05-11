@@ -130,7 +130,7 @@ export class MaxHomeDashboardStrategy extends HTMLElement {
       .map((entity) => entity.entity_id)
       .filter((entityId) => hass.states[entityId]);
     const groupedEntityIds = groupEntities(hass, visibleEntityIds);
-    const entityCategoryViews = createEntityCategoryViews(hass, groupedEntityIds, pathRegistry);
+    const entityCategoryViews = createEntityCategoryViews(hass, groupedEntityIds, entities, visibleAreas, devices, floors, pathRegistry);
     const dashboardRootPath = getDashboardRootPath([
       "dashboard",
       ...categoryViews.map((view) => view.path).filter((path): path is string => Boolean(path)),
@@ -211,6 +211,11 @@ function createDashboardView(
             heading: `Willkommen ${locationName}`,
             heading_style: "title",
             icon: "mdi:home-heart",
+          },
+          {
+            type: "heading",
+            heading: " ",
+            heading_style: "subtitle",
           },
           ...roomSections,
         ],
@@ -295,13 +300,13 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 }
 
 function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
-  const subtitle = area.subtitle
-    ? `<div style="font-size: 12px; line-height: 1.2; margin-top: 4px;">${escapeHtml(area.subtitle)}</div>`
-    : "";
-
   return {
-    type: "markdown",
-    content: `<div style="text-align: center; min-height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 28px;"></ha-icon><div style="font-size: 13px; font-weight: 600; line-height: 1.2; margin-top: 8px;">${escapeHtml(area.title)}</div>${subtitle}</div>`,
+    type: "button",
+    name: area.subtitle ? `${area.title}\n${area.subtitle}` : area.title,
+    icon: area.icon,
+    icon_height: "24px",
+    show_icon: true,
+    show_name: true,
     grid_options: {
       columns: 4,
       rows: 2,
@@ -401,8 +406,13 @@ function getAreaTemperatureSummary(
 function createEntityCategoryViews(
   hass: HomeAssistant,
   groupedEntityIds: Record<EntityGroupKey, string[]>,
+  entities: EntityRegistryEntry[],
+  areas: AreaRegistryEntry[],
+  devices: DeviceRegistryEntry[],
+  floors: FloorRegistryEntry[],
   pathRegistry: Set<string>,
 ): EntityCategoryViews {
+  const entityLocations = createEntityLocationResolver(entities, areas, devices, floors);
   const pathByKey: Partial<Record<EntityGroupKey, string>> = {};
   const views = DASHBOARD_SUMMARY_GROUPS.map((group) => {
     const path = uniquePath(group.path, pathRegistry);
@@ -417,14 +427,7 @@ function createEntityCategoryViews(
       max_columns: 3,
       sections:
         groupedEntityIds[group.key].length > 0
-          ? [
-              createEntityGroupSection(
-                hass,
-                { ...group, title: getLocalizedGroupTitle(group.key) },
-                groupedEntityIds[group.key],
-                false,
-              ),
-            ]
+          ? createLocatedEntitySections(hass, { ...group, title: getLocalizedGroupTitle(group.key) }, groupedEntityIds[group.key], entityLocations)
           : [
               {
                 type: "grid",
@@ -440,6 +443,109 @@ function createEntityCategoryViews(
   });
 
   return { views, pathByKey };
+}
+
+interface EntityLocation {
+  areaName: string;
+  floorName: string;
+  floorIcon: string;
+  sortIndex: number;
+}
+
+function createLocatedEntitySections(
+  hass: HomeAssistant,
+  group: EntityGroupDefinition,
+  entityIds: string[],
+  entityLocations: Map<string, EntityLocation>,
+): LovelaceSectionConfig[] {
+  const groupedByFloor = new Map<string, Map<string, string[]>>();
+  const locationByFloor = new Map<string, EntityLocation>();
+
+  for (const entityId of entityIds) {
+    const location = entityLocations.get(entityId) ?? {
+      areaName: "Ohne Raum",
+      floorName: "Weitere Räume",
+      floorIcon: "mdi:home-floor-0",
+      sortIndex: Number.MAX_SAFE_INTEGER,
+    };
+    const floorAreas = groupedByFloor.get(location.floorName) ?? new Map<string, string[]>();
+    floorAreas.set(location.areaName, [...(floorAreas.get(location.areaName) ?? []), entityId]);
+    groupedByFloor.set(location.floorName, floorAreas);
+    locationByFloor.set(location.floorName, location);
+  }
+
+  return Array.from(groupedByFloor.entries())
+    .sort(([leftFloor], [rightFloor]) => {
+      const leftLocation = locationByFloor.get(leftFloor);
+      const rightLocation = locationByFloor.get(rightFloor);
+
+      return (leftLocation?.sortIndex ?? 0) - (rightLocation?.sortIndex ?? 0) || leftFloor.localeCompare(rightFloor);
+    })
+    .flatMap(([floorName, areasForFloor]) => {
+      const floorLocation = locationByFloor.get(floorName);
+      const cards: LovelaceCardConfig[] = [
+        {
+          type: "heading",
+          heading: floorName,
+          heading_style: "subtitle",
+          icon: floorLocation?.floorIcon ?? "mdi:home-floor-0",
+        },
+      ];
+
+      for (const [areaName, areaEntityIds] of Array.from(areasForFloor.entries()).sort(([left], [right]) => left.localeCompare(right))) {
+        cards.push({
+          type: "heading",
+          heading: areaName,
+          heading_style: "subtitle",
+          icon: "mdi:chevron-right",
+        });
+        cards.push(...createEntityCards(hass, areaEntityIds));
+      }
+
+      return [
+        {
+          type: "grid",
+          cards,
+        },
+      ];
+    });
+}
+
+function createEntityLocationResolver(
+  entities: EntityRegistryEntry[],
+  areas: AreaRegistryEntry[],
+  devices: DeviceRegistryEntry[],
+  floors: FloorRegistryEntry[],
+): Map<string, EntityLocation> {
+  const areaById = new Map(areas.map((area) => [area.area_id, area]));
+  const deviceById = new Map(devices.map((device) => [device.id, device]));
+  const floorById = new Map(floors.map((floor) => [floor.floor_id, floor]));
+  const floorSortOrder = new Map(
+    floors
+      .slice()
+      .sort(compareFloors)
+      .map((floor, index) => [floor.floor_id, index]),
+  );
+
+  return new Map(
+    entities.map((entity) => {
+      const device = entity.device_id ? deviceById.get(entity.device_id) : undefined;
+      const areaId = entity.area_id ?? device?.area_id ?? undefined;
+      const area = areaId ? areaById.get(areaId) : undefined;
+      const floorId = area?.floor_id ?? device?.floor_id ?? undefined;
+      const floor = floorId ? floorById.get(floorId) : undefined;
+
+      return [
+        entity.entity_id,
+        {
+          areaName: area?.name ?? "Ohne Raum",
+          floorName: floor?.name ?? "Weitere Räume",
+          floorIcon: floor?.icon ?? "mdi:home-floor-0",
+          sortIndex: floorId ? floorSortOrder.get(floorId) ?? floors.length : floors.length,
+        },
+      ];
+    }),
+  );
 }
 
 function getLocalizedGroupTitle(groupKey: EntityGroupKey): string {
@@ -572,14 +678,6 @@ function createEntityGroupSection(
   entityIds: string[],
   showHeading = true,
 ): LovelaceSectionConfig {
-  const cameraEntities = entityIds.filter(isCameraEntity);
-  const historyEntities = hass ? entityIds.filter((entityId) => shouldRenderAsHistoryGraph(hass, entityId)) : [];
-  const tileEntities = entityIds.filter(
-    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && shouldRenderAsTile(entityId),
-  );
-  const rowEntities = entityIds.filter(
-    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && !shouldRenderAsTile(entityId),
-  );
   const cards: LovelaceCardConfig[] = showHeading
     ? [
         {
@@ -590,6 +688,25 @@ function createEntityGroupSection(
         },
       ]
     : [];
+
+  cards.push(...createEntityCards(hass, entityIds));
+
+  return {
+    type: "grid",
+    cards,
+  };
+}
+
+function createEntityCards(hass: HomeAssistant | undefined, entityIds: string[]): LovelaceCardConfig[] {
+  const cameraEntities = entityIds.filter(isCameraEntity);
+  const historyEntities = hass ? entityIds.filter((entityId) => shouldRenderAsHistoryGraph(hass, entityId)) : [];
+  const tileEntities = entityIds.filter(
+    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && shouldRenderAsTile(entityId),
+  );
+  const rowEntities = entityIds.filter(
+    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && !shouldRenderAsTile(entityId),
+  );
+  const cards: LovelaceCardConfig[] = [];
 
   for (const entityId of cameraEntities) {
     cards.push({
@@ -629,10 +746,7 @@ function createEntityGroupSection(
     });
   }
 
-  return {
-    type: "grid",
-    cards,
-  };
+  return cards;
 }
 
 function shouldRenderAsTile(entityId: string): boolean {
