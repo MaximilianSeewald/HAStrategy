@@ -274,10 +274,9 @@ function createFloorRoomCards(areas: DashboardNavigationItem[]): LovelaceCardCon
           .slice()
           .sort((left, right) => left.title.localeCompare(right.title))
           .map((area) => ({
-            type: "tile",
+            type: "button",
             name: area.title,
             icon: area.icon,
-            color: "primary",
             tap_action: {
               action: "navigate",
               navigation_path: `/${area.path}`,
@@ -336,11 +335,11 @@ function createDashboardSummaryItems(
 
 function createSummaryCard(item: DashboardSummaryItem): LovelaceCardConfig {
   return {
-    type: "tile",
-    name: item.title,
+    type: "button",
+    name: `${item.title}\n${item.subtitle}`,
     icon: item.icon,
-    color: item.color,
-    state_content: item.subtitle,
+    show_icon: true,
+    show_name: true,
     tap_action: item.path
       ? {
           action: "navigate",
@@ -399,22 +398,8 @@ function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewCo
     title: config.title ?? "Shopping",
     path: config.path ?? "shopping",
     icon: config.icon ?? "mdi:cart-outline",
-    type: "sections",
-    max_columns: 2,
-    sections: [
-      {
-        type: "grid",
-        cards: [
-          {
-            type: "heading",
-            heading: config.title ?? "Shopping",
-            heading_style: "title",
-            icon: config.icon ?? "mdi:cart-outline",
-          },
-          card,
-        ],
-      },
-    ],
+    panel: true,
+    cards: [card],
   };
 }
 

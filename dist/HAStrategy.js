@@ -1,4 +1,4 @@
-const u = "max-home-dashboard", E = [
+const d = "max-home-dashboard", E = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline" },
@@ -13,18 +13,18 @@ class k extends HTMLElement {
       icon: "mdi:home-assistant"
     };
   }
-  static async generate(i, t) {
+  static async generate(i, e) {
     const [n, o, r] = await Promise.all([
-      t.callWS({ type: "config/area_registry/list" }),
-      t.callWS({ type: "config/device_registry/list" }),
-      t.callWS({ type: "config/entity_registry/list" })
-    ]), s = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), a = K(i), d = n.filter((c) => c.area_id && c.name).sort((c, p) => c.name.localeCompare(p.name)), m = T(i), S = /* @__PURE__ */ new Set(["dashboard", ...m.map((c) => c.path).filter(Boolean)]), g = x(d, s, S);
+      e.callWS({ type: "config/area_registry/list" }),
+      e.callWS({ type: "config/device_registry/list" }),
+      e.callWS({ type: "config/entity_registry/list" })
+    ]), s = await e.callWS({ type: "config/floor_registry/list" }).catch(() => []), a = K(i), u = n.filter((c) => c.area_id && c.name).sort((c, p) => c.name.localeCompare(p.name)), m = M(i), S = /* @__PURE__ */ new Set(["dashboard", ...m.map((c) => c.path).filter(Boolean)]), g = N(u, s, S);
     return {
       title: i.title ?? "Max Home",
       views: [
-        A(t, g, m, r, a),
+        A(e, g, m, r, a),
         ...m,
-        ...d.map((c, p) => {
+        ...u.map((c, p) => {
           const h = g[p];
           return {
             title: c.name,
@@ -34,7 +34,7 @@ class k extends HTMLElement {
             type: "sections",
             max_columns: 3,
             strategy: {
-              type: `custom:${u}`,
+              type: `custom:${d}`,
               area: c,
               devices: o,
               entities: r,
@@ -47,15 +47,15 @@ class k extends HTMLElement {
   }
 }
 class C extends HTMLElement {
-  static async generate(i, t) {
-    const n = B(i).filter((o) => t.states[o]).sort((o, r) => f(t, o).localeCompare(f(t, r)));
+  static async generate(i, e) {
+    const n = B(i).filter((o) => e.states[o]).sort((o, r) => f(e, o).localeCompare(f(e, r)));
     return {
-      sections: F(t, i.area, n)
+      sections: F(e, i.area, n)
     };
   }
 }
-function A(e, i, t, n, o) {
-  const r = e.config.location_name ?? "Home", s = N(i), a = I(e, t, n, o);
+function A(t, i, e, n, o) {
+  const r = t.config.location_name ?? "Home", s = x(i), a = I(t, e, n, o);
   return {
     title: "Dashboard",
     path: "dashboard",
@@ -89,19 +89,19 @@ function A(e, i, t, n, o) {
             type: "grid",
             columns: 1,
             square: !1,
-            cards: a.map(M)
+            cards: a.map($)
           }
         ]
       }
-    ].filter((d) => d.cards.length > 0)
+    ].filter((u) => u.cards.length > 0)
   };
 }
-function x(e, i, t) {
+function N(t, i, e) {
   const n = new Map(i.map((r) => [r.floor_id, r])), o = new Map(
     i.slice().sort(q).map((r, s) => [r.floor_id, s])
   );
-  return e.map((r) => {
-    const s = v(l(r.name || r.area_id), t), a = r.floor_id ? n.get(r.floor_id) : void 0;
+  return t.map((r) => {
+    const s = v(l(r.name || r.area_id), e), a = r.floor_id ? n.get(r.floor_id) : void 0;
     return {
       title: r.name,
       path: s,
@@ -113,21 +113,21 @@ function x(e, i, t) {
     };
   });
 }
-function N(e) {
+function x(t) {
   const i = /* @__PURE__ */ new Map();
-  for (const t of e) {
-    const n = t.floorName ?? "Weitere Räume";
-    i.set(n, [...i.get(n) ?? [], t]);
+  for (const e of t) {
+    const n = e.floorName ?? "Weitere Räume";
+    i.set(n, [...i.get(n) ?? [], e]);
   }
-  return Array.from(i.entries()).sort(([, t], [, n]) => {
-    const o = t[0], r = n[0];
+  return Array.from(i.entries()).sort(([, e], [, n]) => {
+    const o = e[0], r = n[0];
     return ((o == null ? void 0 : o.sortIndex) ?? 0) - ((r == null ? void 0 : r.sortIndex) ?? 0) || ((o == null ? void 0 : o.floorName) ?? "").localeCompare((r == null ? void 0 : r.floorName) ?? "");
-  }).flatMap(([t, n]) => {
+  }).flatMap(([e, n]) => {
     var o;
     return [
       {
         type: "heading",
-        heading: t,
+        heading: e,
         heading_style: "subtitle",
         icon: ((o = n[0]) == null ? void 0 : o.floorIcon) ?? "mdi:home-floor-0"
       },
@@ -136,10 +136,9 @@ function N(e) {
         columns: 3,
         square: !1,
         cards: n.slice().sort((r, s) => r.title.localeCompare(s.title)).map((r) => ({
-          type: "tile",
+          type: "button",
           name: r.title,
           icon: r.icon,
-          color: "primary",
           tap_action: {
             action: "navigate",
             navigation_path: `/${r.path}`
@@ -149,8 +148,8 @@ function N(e) {
     ];
   });
 }
-function I(e, i, t, n) {
-  const o = w(t, n).map((a) => a.entity_id).filter((a) => e.states[a]), r = b(e, o), s = i.map((a) => ({
+function I(t, i, e, n) {
+  const o = w(e, n).map((a) => a.entity_id).filter((a) => t.states[a]), r = b(t, o), s = i.map((a) => ({
     title: a.title,
     subtitle: "Öffnen",
     path: a.path ?? l(a.title),
@@ -160,51 +159,52 @@ function I(e, i, t, n) {
   return [
     {
       title: "Beleuchtung",
-      subtitle: W(e, r.lights),
+      subtitle: W(t, r.lights),
       icon: "mdi:lamps-outline",
       color: "amber"
     },
     {
       title: "Raumklima",
-      subtitle: D(e, r.climate),
+      subtitle: D(t, r.climate),
       icon: "mdi:home-thermometer-outline",
       color: "deep-orange"
     },
     {
       title: "Sicherheit",
-      subtitle: L(e, r.security),
+      subtitle: L(t, r.security),
       icon: "mdi:shield-home-outline",
       color: "blue-grey"
     },
     {
       title: "Mediaplayer",
-      subtitle: V(e, r.media),
+      subtitle: V(t, r.media),
       icon: "mdi:music-box-outline",
       color: "cyan"
     },
     ...s
   ];
 }
-function M(e) {
+function $(t) {
   return {
-    type: "tile",
-    name: e.title,
-    icon: e.icon,
-    color: e.color,
-    state_content: e.subtitle,
-    tap_action: e.path ? {
+    type: "button",
+    name: `${t.title}
+${t.subtitle}`,
+    icon: t.icon,
+    show_icon: !0,
+    show_name: !0,
+    tap_action: t.path ? {
       action: "navigate",
-      navigation_path: `/${e.path}`
+      navigation_path: `/${t.path}`
     } : {
       action: "none"
     }
   };
 }
-function T(e) {
-  var t;
+function M(t) {
+  var e;
   const i = [];
-  ((t = e.shopping) == null ? void 0 : t.enabled) !== !1 && i.push($(e.shopping));
-  for (const n of e.categories ?? [])
+  ((e = t.shopping) == null ? void 0 : e.enabled) !== !1 && i.push(T(t.shopping));
+  for (const n of t.categories ?? [])
     !n.id || !n.title || !Array.isArray(n.cards) || i.push({
       title: n.title,
       path: n.path ?? l(n.id),
@@ -220,37 +220,23 @@ function T(e) {
     });
   return G(i, ["dashboard"]);
 }
-function $(e = {}) {
+function T(t = {}) {
   const i = {
     type: "custom:ktor-shopping-list-card",
     title: "Shopping List",
-    addon_slug: e.addon_slug ?? "ktor_app",
-    show_completed: e.show_completed ?? !0
+    addon_slug: t.addon_slug ?? "ktor_app",
+    show_completed: t.show_completed ?? !0
   };
-  return e.backend_url && (delete i.addon_slug, i.backend_url = e.backend_url), {
-    title: e.title ?? "Shopping",
-    path: e.path ?? "shopping",
-    icon: e.icon ?? "mdi:cart-outline",
-    type: "sections",
-    max_columns: 2,
-    sections: [
-      {
-        type: "grid",
-        cards: [
-          {
-            type: "heading",
-            heading: e.title ?? "Shopping",
-            heading_style: "title",
-            icon: e.icon ?? "mdi:cart-outline"
-          },
-          i
-        ]
-      }
-    ]
+  return t.backend_url && (delete i.addon_slug, i.backend_url = t.backend_url), {
+    title: t.title ?? "Shopping",
+    path: t.path ?? "shopping",
+    icon: t.icon ?? "mdi:cart-outline",
+    panel: !0,
+    cards: [i]
   };
 }
-function F(e, i, t) {
-  if (t.length === 0)
+function F(t, i, e) {
+  if (e.length === 0)
     return [
       {
         type: "grid",
@@ -268,7 +254,7 @@ function F(e, i, t) {
         ]
       }
     ];
-  const n = b(e, t), o = [
+  const n = b(t, e), o = [
     {
       type: "grid",
       cards: [
@@ -287,20 +273,20 @@ function F(e, i, t) {
   }
   return o;
 }
-function H(e, i) {
-  const t = i.filter(y), n = i.filter((r) => !y(r)), o = [
+function H(t, i) {
+  const e = i.filter(y), n = i.filter((r) => !y(r)), o = [
     {
       type: "heading",
-      heading: e.title,
+      heading: t.title,
       heading_style: "subtitle",
-      icon: e.icon
+      icon: t.icon
     }
   ];
-  return t.length > 0 && o.push({
+  return e.length > 0 && o.push({
     type: "grid",
     columns: 2,
     square: !1,
-    cards: t.map((r) => ({
+    cards: e.map((r) => ({
       type: "tile",
       entity: r
     }))
@@ -313,8 +299,8 @@ function H(e, i) {
     cards: o
   };
 }
-function y(e) {
-  const i = e.split(".")[0] ?? "";
+function y(t) {
+  const i = t.split(".")[0] ?? "";
   return [
     "button",
     "climate",
@@ -334,8 +320,8 @@ function y(e) {
     "water_heater"
   ].includes(i);
 }
-function b(e, i) {
-  const t = {
+function b(t, i) {
+  const e = {
     lights: [],
     climate: [],
     security: [],
@@ -344,105 +330,105 @@ function b(e, i) {
     other: []
   };
   for (const n of i)
-    t[R(e, n)].push(n);
-  return t;
+    e[R(t, n)].push(n);
+  return e;
 }
-function R(e, i) {
+function R(t, i) {
   var o;
-  const t = i.split(".")[0] ?? "", n = (o = e.states[i]) == null ? void 0 : o.attributes.device_class;
-  return t === "light" || t === "switch" || t === "cover" ? "lights" : ["climate", "fan", "humidifier", "water_heater"].includes(t) ? "climate" : ["alarm_control_panel", "binary_sensor", "camera", "lock"].includes(t) ? "security" : ["media_player", "remote", "vacuum"].includes(t) ? "media" : t === "sensor" || ["temperature", "humidity", "illuminance", "power", "energy", "battery"].includes(String(n)) ? "sensors" : "other";
+  const e = i.split(".")[0] ?? "", n = (o = t.states[i]) == null ? void 0 : o.attributes.device_class;
+  return e === "light" || e === "switch" || e === "cover" ? "lights" : ["climate", "fan", "humidifier", "water_heater"].includes(e) ? "climate" : ["alarm_control_panel", "binary_sensor", "camera", "lock"].includes(e) ? "security" : ["media_player", "remote", "vacuum"].includes(e) ? "media" : e === "sensor" || ["temperature", "humidity", "illuminance", "power", "energy", "battery"].includes(String(n)) ? "sensors" : "other";
 }
-function W(e, i) {
-  const t = i.filter((n) => {
+function W(t, i) {
+  const e = i.filter((n) => {
     var o;
-    return ["on", "open", "opening"].includes(((o = e.states[n]) == null ? void 0 : o.state) ?? "");
+    return ["on", "open", "opening"].includes(((o = t.states[n]) == null ? void 0 : o.state) ?? "");
   }).length;
-  return t === 0 ? "Alle aus" : `${t} aktiv`;
+  return e === 0 ? "Alle aus" : `${e} aktiv`;
 }
-function D(e, i) {
-  const t = i.map((o) => P(e, o)).filter((o) => Number.isFinite(o));
-  return t.length === 0 ? "Keine Werte" : `${(t.reduce((o, r) => o + r, 0) / t.length).toFixed(1).replace(".", ",")}°`;
+function D(t, i) {
+  const e = i.map((o) => P(t, o)).filter((o) => Number.isFinite(o));
+  return e.length === 0 ? "Keine Werte" : `${(e.reduce((o, r) => o + r, 0) / e.length).toFixed(1).replace(".", ",")}°`;
 }
-function L(e, i) {
-  const t = i.filter(
+function L(t, i) {
+  const e = i.filter(
     (n) => {
       var o;
-      return ["on", "open", "opening", "unlocked", "triggered", "armed_away", "armed_home"].includes(((o = e.states[n]) == null ? void 0 : o.state) ?? "");
+      return ["on", "open", "opening", "unlocked", "triggered", "armed_away", "armed_home"].includes(((o = t.states[n]) == null ? void 0 : o.state) ?? "");
     }
   ).length;
-  return t === 0 ? "Alles ruhig" : `${t} aktiv`;
+  return e === 0 ? "Alles ruhig" : `${e} aktiv`;
 }
-function V(e, i) {
-  const t = i.filter((n) => {
+function V(t, i) {
+  const e = i.filter((n) => {
     var o;
-    return ((o = e.states[n]) == null ? void 0 : o.state) === "playing";
+    return ((o = t.states[n]) == null ? void 0 : o.state) === "playing";
   }).length;
-  return t === 0 ? "Keine Wiedergabe" : `${t} Wiedergabe`;
+  return e === 0 ? "Keine Wiedergabe" : `${e} Wiedergabe`;
 }
-function P(e, i) {
-  const t = e.states[i], n = ["current_temperature", "temperature"];
+function P(t, i) {
+  const e = t.states[i], n = ["current_temperature", "temperature"];
   for (const o of n) {
-    const r = t == null ? void 0 : t.attributes[o];
+    const r = e == null ? void 0 : e.attributes[o];
     if (typeof r == "number")
       return r;
   }
-  if ((t == null ? void 0 : t.attributes.device_class) === "temperature") {
-    const o = Number.parseFloat(t.state);
+  if ((e == null ? void 0 : e.attributes.device_class) === "temperature") {
+    const o = Number.parseFloat(e.state);
     if (Number.isFinite(o))
       return o;
   }
 }
-function q(e, i) {
-  return typeof e.level == "number" && typeof i.level == "number" && e.level !== i.level ? e.level - i.level : typeof e.level == "number" ? -1 : typeof i.level == "number" ? 1 : e.name.localeCompare(i.name);
+function q(t, i) {
+  return typeof t.level == "number" && typeof i.level == "number" && t.level !== i.level ? t.level - i.level : typeof t.level == "number" ? -1 : typeof i.level == "number" ? 1 : t.name.localeCompare(i.name);
 }
-function G(e, i = []) {
-  const t = new Set(i);
-  return e.map((n) => {
+function G(t, i = []) {
+  const e = new Set(i);
+  return t.map((n) => {
     const o = l(n.path ?? n.title);
     return {
       ...n,
-      path: v(o, t)
+      path: v(o, e)
     };
   });
 }
-function v(e, i) {
-  const t = i instanceof Set ? i : new Set(i.filter(Boolean)), n = l(e || "view") || "view";
+function v(t, i) {
+  const e = i instanceof Set ? i : new Set(i.filter(Boolean)), n = l(t || "view") || "view";
   let o = n, r = 2;
-  for (; t.has(o); )
+  for (; e.has(o); )
     o = `${n}-${r}`, r += 1;
-  return t.add(o), o;
+  return e.add(o), o;
 }
-function B(e) {
-  const i = e.entity_filter ?? {
+function B(t) {
+  const i = t.entity_filter ?? {
     hide_entity_categories: _
-  }, t = new Set(
-    e.devices.filter((n) => n.area_id === e.area.area_id).map((n) => n.id)
+  }, e = new Set(
+    t.devices.filter((n) => n.area_id === t.area.area_id).map((n) => n.id)
   );
-  return w(e.entities, i).filter(
-    (n) => n.area_id === e.area.area_id || !n.area_id && n.device_id !== null && n.device_id !== void 0 && t.has(n.device_id)
+  return w(t.entities, i).filter(
+    (n) => n.area_id === t.area.area_id || !n.area_id && n.device_id !== null && n.device_id !== void 0 && e.has(n.device_id)
   ).map((n) => n.entity_id);
 }
-function w(e, i) {
-  const t = new Set(i.hide_entity_categories);
-  return e.filter((n) => !n.hidden_by && !n.disabled_by).filter((n) => !n.entity_category || !t.has(n.entity_category));
+function w(t, i) {
+  const e = new Set(i.hide_entity_categories);
+  return t.filter((n) => !n.hidden_by && !n.disabled_by).filter((n) => !n.entity_category || !e.has(n.entity_category));
 }
-function K(e) {
-  var t;
-  const i = (t = e.entity_filter) == null ? void 0 : t.hide_entity_categories;
+function K(t) {
+  var e;
+  const i = (e = t.entity_filter) == null ? void 0 : e.hide_entity_categories;
   return {
     hide_entity_categories: Array.isArray(i) ? i : _
   };
 }
-function f(e, i) {
-  var t;
-  return ((t = e.states[i]) == null ? void 0 : t.attributes.friendly_name) ?? i;
+function f(t, i) {
+  var e;
+  return ((e = t.states[i]) == null ? void 0 : e.attributes.friendly_name) ?? i;
 }
-function l(e) {
-  return e.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+function l(t) {
+  return t.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 function O() {
-  customElements.define(`ll-strategy-dashboard-${u}`, k), customElements.define(`ll-strategy-view-${u}`, C), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
-    type: u,
+  customElements.define(`ll-strategy-dashboard-${d}`, k), customElements.define(`ll-strategy-view-${d}`, C), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
+    type: d,
     strategyType: "dashboard",
     name: "Max Home",
     description: "Generates an area-based Home Assistant dashboard.",
