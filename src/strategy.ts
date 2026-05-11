@@ -52,6 +52,7 @@ interface DashboardNavigationItem {
   title: string;
   path: string;
   icon: string;
+  subtitle?: string;
   floorId?: string | null;
   floorName?: string;
   floorIcon?: string;
@@ -63,11 +64,15 @@ interface DashboardSummaryItem {
   subtitle: string;
   path?: string;
   icon: string;
-  color: string;
 }
 
 interface ResolvedEntityFilterConfig {
   hide_entity_categories: string[];
+}
+
+interface EntityCategoryViews {
+  views: LovelaceViewConfig[];
+  pathByKey: Partial<Record<EntityGroupKey, string>>;
 }
 
 type EntityGroupKey = "lights" | "climate" | "security" | "media" | "sensors" | "other";
@@ -76,16 +81,19 @@ interface EntityGroupDefinition {
   key: EntityGroupKey;
   title: string;
   icon: string;
+  path?: string;
 }
 
 const ENTITY_GROUPS: EntityGroupDefinition[] = [
-  { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline" },
-  { key: "climate", title: "Climate", icon: "mdi:thermostat" },
-  { key: "security", title: "Security", icon: "mdi:shield-home-outline" },
-  { key: "media", title: "Media", icon: "mdi:speaker" },
+  { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
+  { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
+  { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
+  { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" },
 ];
+
+const DASHBOARD_SUMMARY_GROUPS = ENTITY_GROUPS.filter((group) => group.path);
 
 const DEFAULT_HIDDEN_ENTITY_CATEGORIES = ["config", "diagnostic"];
 
@@ -117,13 +125,25 @@ export class MaxHomeDashboardStrategy extends HTMLElement {
 
     const categoryViews = createCategoryViews(config);
     const pathRegistry = new Set(["dashboard", ...categoryViews.map((view) => view.path).filter(Boolean) as string[]]);
-    const areaNavigation = createAreaNavigation(visibleAreas, floors, pathRegistry);
+    const areaNavigation = createAreaNavigation(visibleAreas, floors, devices, entities, entityFilter, hass, pathRegistry);
+    const visibleEntityIds = getVisibleEntities(entities, entityFilter)
+      .map((entity) => entity.entity_id)
+      .filter((entityId) => hass.states[entityId]);
+    const groupedEntityIds = groupEntities(hass, visibleEntityIds);
+    const entityCategoryViews = createEntityCategoryViews(groupedEntityIds, pathRegistry);
+    const dashboardRootPath = getDashboardRootPath([
+      "dashboard",
+      ...categoryViews.map((view) => view.path).filter((path): path is string => Boolean(path)),
+      ...entityCategoryViews.views.map((view) => view.path).filter((path): path is string => Boolean(path)),
+      ...areaNavigation.map((area) => area.path),
+    ]);
 
     return {
       title: config.title ?? "Max Home",
       views: [
-        createDashboardView(hass, areaNavigation, categoryViews, entities, entityFilter),
+        createDashboardView(hass, areaNavigation, categoryViews, groupedEntityIds, entityCategoryViews.pathByKey, dashboardRootPath),
         ...categoryViews,
+        ...entityCategoryViews.views,
         ...visibleAreas.map((area, index) => {
           const navigation = areaNavigation[index];
 
@@ -167,12 +187,13 @@ function createDashboardView(
   hass: HomeAssistant,
   areas: DashboardNavigationItem[],
   categories: LovelaceViewConfig[],
-  entities: EntityRegistryEntry[],
-  entityFilter: ResolvedEntityFilterConfig,
+  groupedEntityIds: Record<EntityGroupKey, string[]>,
+  entityCategoryPaths: Partial<Record<EntityGroupKey, string>>,
+  dashboardRootPath: string,
 ): LovelaceViewConfig {
   const locationName = hass.config.location_name ?? "Home";
-  const roomSections = createFloorRoomCards(areas);
-  const summaryItems = createDashboardSummaryItems(hass, categories, entities, entityFilter);
+  const roomSections = createFloorRoomCards(areas, dashboardRootPath);
+  const summaryItems = createDashboardSummaryItems(hass, categories, groupedEntityIds, entityCategoryPaths);
 
   return {
     title: "Dashboard",
@@ -203,12 +224,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          {
-            type: "grid",
-            columns: 1,
-            square: false,
-            cards: summaryItems.map(createSummaryCard),
-          },
+          ...summaryItems.map((item) => createSummaryCard(item, dashboardRootPath)),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -218,6 +234,10 @@ function createDashboardView(
 function createAreaNavigation(
   areas: AreaRegistryEntry[],
   floors: FloorRegistryEntry[],
+  devices: DeviceRegistryEntry[],
+  entities: EntityRegistryEntry[],
+  entityFilter: ResolvedEntityFilterConfig,
+  hass: HomeAssistant,
   pathRegistry: Set<string>,
 ): DashboardNavigationItem[] {
   const floorById = new Map(floors.map((floor) => [floor.floor_id, floor]));
@@ -236,6 +256,7 @@ function createAreaNavigation(
       title: area.name,
       path,
       icon: area.icon ?? "mdi:floor-plan",
+      subtitle: getAreaTemperatureSummary(hass, area, devices, entities, entityFilter),
       floorId: area.floor_id,
       floorName: floor?.name ?? "Weitere Räume",
       floorIcon: floor?.icon ?? "mdi:home-floor-0",
@@ -244,7 +265,7 @@ function createAreaNavigation(
   });
 }
 
-function createFloorRoomCards(areas: DashboardNavigationItem[]): LovelaceCardConfig[] {
+function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPath: string): LovelaceCardConfig[] {
   const groupedAreas = new Map<string, DashboardNavigationItem[]>();
 
   for (const area of areas) {
@@ -266,89 +287,194 @@ function createFloorRoomCards(areas: DashboardNavigationItem[]): LovelaceCardCon
         heading_style: "subtitle",
         icon: floorAreas[0]?.floorIcon ?? "mdi:home-floor-0",
       },
-      {
-        type: "grid",
-        columns: 3,
-        square: false,
-        cards: floorAreas
-          .slice()
-          .sort((left, right) => left.title.localeCompare(right.title))
-          .map((area) => ({
-            type: "button",
-            name: area.title,
-            icon: area.icon,
-            tap_action: {
-              action: "navigate",
-              navigation_path: `/${area.path}`,
-            },
-          })),
-      },
+      ...floorAreas
+        .slice()
+        .sort((left, right) => left.title.localeCompare(right.title))
+        .map((area) => ({
+          type: "button",
+          name: area.subtitle ? `${area.title}\n${area.subtitle}` : area.title,
+          icon: area.icon,
+          icon_height: "28px",
+          show_icon: true,
+          show_name: true,
+          grid_options: {
+            columns: 4,
+            rows: 2,
+          },
+          tap_action: {
+            action: "navigate",
+            navigation_path: createNavigationPath(dashboardRootPath, area.path),
+          },
+        })),
     ]);
 }
 
 function createDashboardSummaryItems(
   hass: HomeAssistant,
   categories: LovelaceViewConfig[],
-  entities: EntityRegistryEntry[],
-  entityFilter: ResolvedEntityFilterConfig,
+  groupedEntities: Record<EntityGroupKey, string[]>,
+  entityCategoryPaths: Partial<Record<EntityGroupKey, string>>,
 ): DashboardSummaryItem[] {
-  const visibleEntityIds = getVisibleEntities(entities, entityFilter)
-    .map((entity) => entity.entity_id)
-    .filter((entityId) => hass.states[entityId]);
-  const groupedEntities = groupEntities(hass, visibleEntityIds);
   const categoryItems = categories.map((category) => ({
     title: category.title,
     subtitle: "Öffnen",
     path: category.path ?? slugify(category.title),
     icon: category.icon ?? "mdi:shape-outline",
-    color: category.title.toLowerCase() === "shopping" ? "green" : "primary",
   }));
 
   return [
     {
       title: "Beleuchtung",
       subtitle: createLightSummary(hass, groupedEntities.lights),
+      path: entityCategoryPaths.lights,
       icon: "mdi:lamps-outline",
-      color: "amber",
     },
     {
       title: "Raumklima",
       subtitle: createClimateSummary(hass, groupedEntities.climate),
+      path: entityCategoryPaths.climate,
       icon: "mdi:home-thermometer-outline",
-      color: "deep-orange",
     },
     {
       title: "Sicherheit",
       subtitle: createSecuritySummary(hass, groupedEntities.security),
+      path: entityCategoryPaths.security,
       icon: "mdi:shield-home-outline",
-      color: "blue-grey",
     },
     {
       title: "Mediaplayer",
       subtitle: createMediaSummary(hass, groupedEntities.media),
+      path: entityCategoryPaths.media,
       icon: "mdi:music-box-outline",
-      color: "cyan",
     },
     ...categoryItems,
   ];
 }
 
-function createSummaryCard(item: DashboardSummaryItem): LovelaceCardConfig {
+function createSummaryCard(item: DashboardSummaryItem, dashboardRootPath: string): LovelaceCardConfig {
   return {
     type: "button",
     name: `${item.title}\n${item.subtitle}`,
     icon: item.icon,
+    icon_height: "22px",
     show_icon: true,
     show_name: true,
+    grid_options: {
+      columns: "full",
+      rows: 1,
+    },
     tap_action: item.path
       ? {
           action: "navigate",
-          navigation_path: `/${item.path}`,
+          navigation_path: createNavigationPath(dashboardRootPath, item.path),
         }
       : {
           action: "none",
         },
   };
+}
+
+function getAreaTemperatureSummary(
+  hass: HomeAssistant,
+  area: AreaRegistryEntry,
+  devices: DeviceRegistryEntry[],
+  entities: EntityRegistryEntry[],
+  entityFilter: ResolvedEntityFilterConfig,
+): string | undefined {
+  const temperatures = getEntitiesForArea({ area, devices, entities, entity_filter: entityFilter })
+    .map((entityId) => getEntityTemperature(hass, entityId))
+    .filter((temperature): temperature is number => Number.isFinite(temperature));
+
+  if (temperatures.length === 0) {
+    return undefined;
+  }
+
+  const average = temperatures.reduce((sum, temperature) => sum + temperature, 0) / temperatures.length;
+
+  return `${average.toFixed(1).replace(".", ",")} °C`;
+}
+
+function createEntityCategoryViews(
+  groupedEntityIds: Record<EntityGroupKey, string[]>,
+  pathRegistry: Set<string>,
+): EntityCategoryViews {
+  const pathByKey: Partial<Record<EntityGroupKey, string>> = {};
+  const views = DASHBOARD_SUMMARY_GROUPS.map((group) => {
+    const path = uniquePath(group.path, pathRegistry);
+    pathByKey[group.key] = path;
+
+    return {
+      title: getLocalizedGroupTitle(group.key),
+      path,
+      icon: group.icon,
+      subview: true,
+      type: "sections",
+      max_columns: 3,
+      sections:
+        groupedEntityIds[group.key].length > 0
+          ? [createEntityGroupSection({ ...group, title: getLocalizedGroupTitle(group.key) }, groupedEntityIds[group.key])]
+          : [
+              {
+                type: "grid",
+                cards: [
+                  {
+                    type: "heading",
+                    heading: getLocalizedGroupTitle(group.key),
+                    heading_style: "title",
+                    icon: group.icon,
+                  },
+                  {
+                    type: "markdown",
+                    content: "Keine sichtbaren Entitäten in dieser Kategorie.",
+                  },
+                ],
+              },
+            ],
+    };
+  });
+
+  return { views, pathByKey };
+}
+
+function getLocalizedGroupTitle(groupKey: EntityGroupKey): string {
+  switch (groupKey) {
+    case "lights":
+      return "Beleuchtung";
+    case "climate":
+      return "Raumklima";
+    case "security":
+      return "Sicherheit";
+    case "media":
+      return "Mediaplayer";
+    case "sensors":
+      return "Sensoren";
+    case "other":
+      return "Sonstige";
+  }
+}
+
+function getDashboardRootPath(viewPaths: string[]): string {
+  const currentPath = window.location.pathname.replace(/\/+$/g, "");
+  const parts = currentPath.split("/").filter(Boolean);
+
+  if (parts.length === 0) {
+    return "";
+  }
+
+  const currentViewPath = decodeURIComponent(parts[parts.length - 1] ?? "");
+
+  if (viewPaths.includes(currentViewPath)) {
+    return `/${parts.slice(0, -1).join("/")}`;
+  }
+
+  return `/${parts.join("/")}`;
+}
+
+function createNavigationPath(dashboardRootPath: string, viewPath: string): string {
+  const root = dashboardRootPath.replace(/\/+$/g, "");
+  const target = viewPath.replace(/^\/+/g, "");
+
+  return `${root}/${target}`;
 }
 
 function createCategoryViews(config: DashboardStrategyConfig): LovelaceViewConfig[] {

@@ -45,7 +45,7 @@ strategy:
           content: "Custom cards go here"
 ```
 
-The top navigation contains only Dashboard, Shopping, and custom categories. Rooms are generated as subviews and are opened from the Dashboard room tiles.
+The top navigation contains only Dashboard, Shopping, and custom categories. Rooms and generated entity categories such as Beleuchtung, Raumklima, Sicherheit, and Mediaplayer are subviews opened from the Dashboard buttons.
 
 ### Entity Filtering
 
