@@ -130,7 +130,7 @@ export class MaxHomeDashboardStrategy extends HTMLElement {
       .map((entity) => entity.entity_id)
       .filter((entityId) => hass.states[entityId]);
     const groupedEntityIds = groupEntities(hass, visibleEntityIds);
-    const entityCategoryViews = createEntityCategoryViews(groupedEntityIds, pathRegistry);
+    const entityCategoryViews = createEntityCategoryViews(hass, groupedEntityIds, pathRegistry);
     const dashboardRootPath = getDashboardRootPath([
       "dashboard",
       ...categoryViews.map((view) => view.path).filter((path): path is string => Boolean(path)),
@@ -290,23 +290,27 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
       ...floorAreas
         .slice()
         .sort((left, right) => left.title.localeCompare(right.title))
-        .map((area) => ({
-          type: "button",
-          name: area.subtitle ? `${area.title}\n${area.subtitle}` : area.title,
-          icon: area.icon,
-          icon_height: "28px",
-          show_icon: true,
-          show_name: true,
-          grid_options: {
-            columns: 4,
-            rows: 2,
-          },
-          tap_action: {
-            action: "navigate",
-            navigation_path: createNavigationPath(dashboardRootPath, area.path),
-          },
-        })),
+        .map((area) => createRoomNavigationCard(area, dashboardRootPath)),
     ]);
+}
+
+function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
+  const subtitle = area.subtitle
+    ? `<div style="font-size: 12px; line-height: 1.2; margin-top: 4px;">${escapeHtml(area.subtitle)}</div>`
+    : "";
+
+  return {
+    type: "markdown",
+    content: `<div style="text-align: center; min-height: 74px; display: flex; flex-direction: column; align-items: center; justify-content: center;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 28px;"></ha-icon><div style="font-size: 13px; font-weight: 600; line-height: 1.2; margin-top: 8px;">${escapeHtml(area.title)}</div>${subtitle}</div>`,
+    grid_options: {
+      columns: 4,
+      rows: 2,
+    },
+    tap_action: {
+      action: "navigate",
+      navigation_path: createNavigationPath(dashboardRootPath, area.path),
+    },
+  };
 }
 
 function createDashboardSummaryItems(
@@ -395,6 +399,7 @@ function getAreaTemperatureSummary(
 }
 
 function createEntityCategoryViews(
+  hass: HomeAssistant,
   groupedEntityIds: Record<EntityGroupKey, string[]>,
   pathRegistry: Set<string>,
 ): EntityCategoryViews {
@@ -412,17 +417,18 @@ function createEntityCategoryViews(
       max_columns: 3,
       sections:
         groupedEntityIds[group.key].length > 0
-          ? [createEntityGroupSection({ ...group, title: getLocalizedGroupTitle(group.key) }, groupedEntityIds[group.key])]
+          ? [
+              createEntityGroupSection(
+                hass,
+                { ...group, title: getLocalizedGroupTitle(group.key) },
+                groupedEntityIds[group.key],
+                false,
+              ),
+            ]
           : [
               {
                 type: "grid",
                 cards: [
-                  {
-                    type: "heading",
-                    heading: getLocalizedGroupTitle(group.key),
-                    heading_style: "title",
-                    icon: group.icon,
-                  },
                   {
                     type: "markdown",
                     content: "Keine sichtbaren Entitäten in dieser Kategorie.",
@@ -536,12 +542,6 @@ function buildAreaSections(hass: HomeAssistant, area: AreaRegistryEntry, entityI
         type: "grid",
         cards: [
           {
-            type: "heading",
-            heading: area.name,
-            heading_style: "title",
-            icon: area.icon ?? "mdi:floor-plan",
-          },
-          {
             type: "markdown",
             content: "No visible entities are assigned to this room yet.",
           },
@@ -551,19 +551,7 @@ function buildAreaSections(hass: HomeAssistant, area: AreaRegistryEntry, entityI
   }
 
   const groups = groupEntities(hass, entityIds);
-  const sections: LovelaceSectionConfig[] = [
-    {
-      type: "grid",
-      cards: [
-        {
-          type: "heading",
-          heading: area.name,
-          heading_style: "title",
-          icon: area.icon ?? "mdi:floor-plan",
-        },
-      ],
-    },
-  ];
+  const sections: LovelaceSectionConfig[] = [];
 
   for (const group of ENTITY_GROUPS) {
     const groupedEntityIds = groups[group.key];
@@ -572,23 +560,54 @@ function buildAreaSections(hass: HomeAssistant, area: AreaRegistryEntry, entityI
       continue;
     }
 
-    sections.push(createEntityGroupSection(group, groupedEntityIds));
+    sections.push(createEntityGroupSection(hass, group, groupedEntityIds));
   }
 
   return sections;
 }
 
-function createEntityGroupSection(group: EntityGroupDefinition, entityIds: string[]): LovelaceSectionConfig {
-  const tileEntities = entityIds.filter(shouldRenderAsTile);
-  const rowEntities = entityIds.filter((entityId) => !shouldRenderAsTile(entityId));
-  const cards: LovelaceCardConfig[] = [
-    {
-      type: "heading",
-      heading: group.title,
-      heading_style: "subtitle",
-      icon: group.icon,
-    },
-  ];
+function createEntityGroupSection(
+  hass: HomeAssistant | undefined,
+  group: EntityGroupDefinition,
+  entityIds: string[],
+  showHeading = true,
+): LovelaceSectionConfig {
+  const cameraEntities = entityIds.filter(isCameraEntity);
+  const historyEntities = hass ? entityIds.filter((entityId) => shouldRenderAsHistoryGraph(hass, entityId)) : [];
+  const tileEntities = entityIds.filter(
+    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && shouldRenderAsTile(entityId),
+  );
+  const rowEntities = entityIds.filter(
+    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && !shouldRenderAsTile(entityId),
+  );
+  const cards: LovelaceCardConfig[] = showHeading
+    ? [
+        {
+          type: "heading",
+          heading: group.title,
+          heading_style: "subtitle",
+          icon: group.icon,
+        },
+      ]
+    : [];
+
+  for (const entityId of cameraEntities) {
+    cards.push({
+      type: "picture-entity",
+      entity: entityId,
+      camera_view: "live",
+      show_name: true,
+      show_state: false,
+    });
+  }
+
+  if (historyEntities.length > 0) {
+    cards.push({
+      type: "history-graph",
+      hours_to_show: 24,
+      entities: historyEntities,
+    });
+  }
 
   if (tileEntities.length > 0) {
     cards.push({
@@ -639,6 +658,17 @@ function shouldRenderAsTile(entityId: string): boolean {
   ].includes(domain);
 }
 
+function isCameraEntity(entityId: string): boolean {
+  return entityId.split(".")[0] === "camera";
+}
+
+function shouldRenderAsHistoryGraph(hass: HomeAssistant, entityId: string): boolean {
+  const domain = entityId.split(".")[0] ?? "";
+  const deviceClass = String(hass.states[entityId]?.attributes.device_class ?? "");
+
+  return domain === "sensor" && ["temperature", "humidity"].includes(deviceClass);
+}
+
 function groupEntities(hass: HomeAssistant, entityIds: string[]): Record<EntityGroupKey, string[]> {
   const groups: Record<EntityGroupKey, string[]> = {
     lights: [],
@@ -664,7 +694,10 @@ function classifyEntity(hass: HomeAssistant, entityId: string): EntityGroupKey {
     return "lights";
   }
 
-  if (["climate", "fan", "humidifier", "water_heater"].includes(domain)) {
+  if (
+    ["climate", "fan", "humidifier", "water_heater"].includes(domain) ||
+    ["temperature", "humidity"].includes(String(deviceClass))
+  ) {
     return "climate";
   }
 
@@ -834,6 +867,25 @@ function slugify(value: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case "\"":
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return character;
+    }
+  });
 }
 
 export function registerStrategies(): void {
