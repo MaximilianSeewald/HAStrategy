@@ -18,7 +18,7 @@ class D extends HTMLElement {
       t.callWS({ type: "config/area_registry/list" }),
       t.callWS({ type: "config/device_registry/list" }),
       t.callWS({ type: "config/entity_registry/list" })
-    ]), c = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), a = ae(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), s = j(n), m = /* @__PURE__ */ new Set(["dashboard", ...s.map((u) => u.path).filter(Boolean)]), d = V(l, c, r, o, a, t, m), h = T(o, a).map((u) => u.entity_id).filter((u) => t.states[u]), p = I(t, h), f = U(t, p, o, l, r, c, m), B = z([
+    ]), c = await t.callWS({ type: "config/floor_registry/list" }).catch(() => []), a = ae(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), s = j(n), m = /* @__PURE__ */ new Set(["dashboard", ...s.map((u) => u.path).filter(Boolean)]), d = V(l, c, r, o, a, t, m), h = T(o, a).map((u) => u.entity_id).filter((u) => t.states[u]), p = C(t, h), f = U(t, p, o, l, r, c, m), B = q([
       "dashboard",
       ...s.map((u) => u.path).filter((u) => !!u),
       ...f.views.map((u) => u.path).filter((u) => !!u),
@@ -151,13 +151,28 @@ ${e.subtitle}` : e.title,
     icon_height: "24px",
     show_icon: !0,
     show_name: !0,
+    card_mod: {
+      style: `
+        ha-card {
+          --ha-card-border-radius: 8px;
+        }
+        #img-cell {
+          margin-bottom: 14px;
+        }
+        #name {
+          font-size: 12px;
+          line-height: 1.25;
+          white-space: pre-line;
+        }
+      `
+    },
     grid_options: {
       columns: 4,
       rows: 2
     },
     tap_action: {
       action: "navigate",
-      navigation_path: M(n, e.path)
+      navigation_path: x(n, e.path)
     }
   };
 }
@@ -211,18 +226,18 @@ ${e.subtitle}`,
     },
     tap_action: e.path ? {
       action: "navigate",
-      navigation_path: M(n, e.path)
+      navigation_path: x(n, e.path)
     } : {
       action: "none"
     }
   };
 }
 function K(e, n, t, i, r) {
-  const o = $({ area: n, devices: t, entities: i, entity_filter: r }).map((a) => x(e, a)).filter((a) => Number.isFinite(a));
+  const o = $({ area: n, devices: t, entities: i, entity_filter: r }).map((a) => I(e, a)).filter((a) => Number.isFinite(a));
   return o.length === 0 ? void 0 : `${(o.reduce((a, l) => a + l, 0) / o.length).toFixed(1).replace(".", ",")} °C`;
 }
 function U(e, n, t, i, r, o, c) {
-  const a = q(t, i, r, o), l = {};
+  const a = z(t, i, r, o), l = {};
   return { views: F.map((m) => {
     const d = v(m.path, c);
     return l[m.key] = d, {
@@ -275,7 +290,7 @@ function Y(e, n, t, i) {
         heading: m,
         heading_style: "subtitle",
         icon: "mdi:chevron-right"
-      }), s.push(...C(e, d));
+      }), s.push(...M(e, d));
     return [
       {
         type: "grid",
@@ -284,7 +299,7 @@ function Y(e, n, t, i) {
     ];
   });
 }
-function q(e, n, t, i) {
+function z(e, n, t, i) {
   const r = new Map(n.map((l) => [l.area_id, l])), o = new Map(t.map((l) => [l.id, l])), c = new Map(i.map((l) => [l.floor_id, l])), a = new Map(
     i.slice().sort(R).map((l, s) => [l.floor_id, s])
   );
@@ -319,14 +334,14 @@ function S(e) {
       return "Sonstige";
   }
 }
-function z(e) {
+function q(e) {
   const t = window.location.pathname.replace(/\/+$/g, "").split("/").filter(Boolean);
   if (t.length === 0)
     return "";
   const i = decodeURIComponent(t[t.length - 1] ?? "");
   return e.includes(i) ? `/${t.slice(0, -1).join("/")}` : `/${t.join("/")}`;
 }
-function M(e, n) {
+function x(e, n) {
   const t = e.replace(/\/+$/g, ""), i = n.replace(/^\/+/g, "");
   return `${t}/${i}`;
 }
@@ -378,7 +393,7 @@ function J(e, n, t) {
         ]
       }
     ];
-  const i = I(e, t), r = [];
+  const i = C(e, t), r = [];
   for (const o of k) {
     const c = i[o.key];
     c.length !== 0 && r.push(Q(e, o, c));
@@ -394,12 +409,12 @@ function Q(e, n, t, i = !0) {
       icon: n.icon
     }
   ] : [];
-  return r.push(...C(e, t)), {
+  return r.push(...M(e, t)), {
     type: "grid",
     cards: r
   };
 }
-function C(e, n) {
+function M(e, n) {
   const t = n.filter(w), i = e ? n.filter((a) => Z(e, a)) : [], r = n.filter(
     (a) => !w(a) && !i.includes(a) && E(a)
   ), o = n.filter(
@@ -460,7 +475,7 @@ function Z(e, n) {
   const t = n.split(".")[0] ?? "", i = String(((r = e.states[n]) == null ? void 0 : r.attributes.device_class) ?? "");
   return t === "sensor" && ["temperature", "humidity"].includes(i);
 }
-function I(e, n) {
+function C(e, n) {
   const t = {
     lights: [],
     climate: [],
@@ -486,7 +501,7 @@ function te(e, n) {
   return t === 0 ? "Alle aus" : `${t} aktiv`;
 }
 function ie(e, n) {
-  const t = n.map((r) => x(e, r)).filter((r) => Number.isFinite(r));
+  const t = n.map((r) => I(e, r)).filter((r) => Number.isFinite(r));
   return t.length === 0 ? "Keine Werte" : `${(t.reduce((r, o) => r + o, 0) / t.length).toFixed(1).replace(".", ",")}°`;
 }
 function ne(e, n) {
@@ -505,7 +520,7 @@ function re(e, n) {
   }).length;
   return t === 0 ? "Keine Wiedergabe" : `${t} Wiedergabe`;
 }
-function x(e, n) {
+function I(e, n) {
   const t = e.states[n], i = ["current_temperature", "temperature"];
   for (const r of i) {
     const o = t == null ? void 0 : t.attributes[r];

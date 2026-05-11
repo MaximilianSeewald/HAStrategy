@@ -300,13 +300,30 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 }
 
 function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
+  const name = area.subtitle ? `${area.title}\n${area.subtitle}` : area.title;
+
   return {
     type: "button",
-    name: area.subtitle ? `${area.title}\n${area.subtitle}` : area.title,
+    name,
     icon: area.icon,
     icon_height: "24px",
     show_icon: true,
     show_name: true,
+    card_mod: {
+      style: `
+        ha-card {
+          --ha-card-border-radius: 8px;
+        }
+        #img-cell {
+          margin-bottom: 14px;
+        }
+        #name {
+          font-size: 12px;
+          line-height: 1.25;
+          white-space: pre-line;
+        }
+      `,
+    },
     grid_options: {
       columns: 4,
       rows: 2,
