@@ -11,7 +11,7 @@ import type {
 } from "./home-assistant";
 
 const STRATEGY_TYPE = "max-home-dashboard";
-const STRATEGY_VERSION = "0.2.1";
+const STRATEGY_VERSION = "0.2.2";
 
 interface DashboardStrategyConfig {
   title?: string;
@@ -1002,6 +1002,8 @@ function escapeHtml(value: string): string {
 }
 
 export function registerStrategies(): void {
+  console.info(`[HAStrategy] loaded ${STRATEGY_VERSION}`);
+
   customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, MaxHomeDashboardStrategy);
   customElements.define(`ll-strategy-view-${STRATEGY_TYPE}`, MaxHomeAreaViewStrategy);
 

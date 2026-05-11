@@ -1,12 +1,12 @@
-const g = "max-home-dashboard", F = "0.2.1", k = [
+const g = "max-home-dashboard", S = "0.2.2", k = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
   { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" }
-], V = k.filter((t) => t.path), A = ["config", "diagnostic"];
-class W extends HTMLElement {
+], H = k.filter((t) => t.path), I = ["config", "diagnostic"];
+class V extends HTMLElement {
   static getCreateSuggestions(n) {
     return {
       title: "Max Home",
@@ -18,7 +18,7 @@ class W extends HTMLElement {
       e.callWS({ type: "config/area_registry/list" }),
       e.callWS({ type: "config/device_registry/list" }),
       e.callWS({ type: "config/entity_registry/list" })
-    ]), a = await e.callWS({ type: "config/floor_registry/list" }).catch(() => []), c = se(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), s = X(n), m = /* @__PURE__ */ new Set(["dashboard", ...s.map((u) => u.path).filter(Boolean)]), d = G(l, a, r, o, c, e, m), h = T(o, c).map((u) => u.entity_id).filter((u) => e.states[u]), p = R(e, h), f = Y(e, p, o, l, r, a, m), B = j([
+    ]), a = await e.callWS({ type: "config/floor_registry/list" }).catch(() => []), c = se(n), l = i.filter((u) => u.area_id && u.name).sort((u, _) => u.name.localeCompare(_.name)), s = X(n), m = /* @__PURE__ */ new Set(["dashboard", ...s.map((u) => u.path).filter(Boolean)]), d = G(l, a, r, o, c, e, m), h = B(o, c).map((u) => u.entity_id).filter((u) => e.states[u]), p = C(e, h), f = Y(e, p, o, l, r, a, m), F = j([
       "dashboard",
       ...s.map((u) => u.path).filter((u) => !!u),
       ...f.views.map((u) => u.path).filter((u) => !!u),
@@ -27,7 +27,7 @@ class W extends HTMLElement {
     return {
       title: n.title ?? "Max Home",
       views: [
-        H(e, d, s, p, f.pathByKey, B),
+        D(e, d, s, p, f.pathByKey, F),
         ...s,
         ...f.views,
         ...l.map((u, _) => {
@@ -52,15 +52,15 @@ class W extends HTMLElement {
     };
   }
 }
-class D extends HTMLElement {
+class W extends HTMLElement {
   static async generate(n, e) {
-    const i = $(n).filter((r) => e.states[r]).sort((r, o) => N(e, r).localeCompare(N(e, o)));
+    const i = T(n).filter((r) => e.states[r]).sort((r, o) => A(e, r).localeCompare(A(e, o)));
     return {
       sections: Q(e, n.area, i)
     };
   }
 }
-function H(t, n, e, i, r, o) {
+function D(t, n, e, i, r, o) {
   const a = t.config.location_name ?? "Home", c = O(n, o), l = L(t, e, i, r);
   return {
     title: "Dashboard",
@@ -104,7 +104,7 @@ function H(t, n, e, i, r, o) {
 }
 function G(t, n, e, i, r, o, a) {
   const c = new Map(n.map((s) => [s.floor_id, s])), l = new Map(
-    n.slice().sort(x).map((s, m) => [s.floor_id, m])
+    n.slice().sort($).map((s, m) => [s.floor_id, m])
   );
   return t.map((s) => {
     const m = v(y(s.name || s.area_id), a), d = s.floor_id ? c.get(s.floor_id) : void 0;
@@ -157,7 +157,7 @@ function P(t, n) {
     },
     tap_action: {
       action: "navigate",
-      navigation_path: I(n, t.path)
+      navigation_path: M(n, t.path)
     }
   };
   return t.stateEntityId && (e.entity = t.stateEntityId), e;
@@ -207,7 +207,7 @@ function K(t, n) {
       icon: e.icon,
       tap_action: e.path ? {
         action: "navigate",
-        navigation_path: I(n, e.path)
+        navigation_path: M(n, e.path)
       } : {
         action: "none"
       }
@@ -215,23 +215,23 @@ function K(t, n) {
   };
 }
 function U(t, n, e, i, r) {
-  return $({ area: n, devices: e, entities: i, entity_filter: r }).find((o) => {
+  return T({ area: n, devices: e, entities: i, entity_filter: r }).find((o) => {
     const a = t.states[o];
-    return o.startsWith("sensor.") && (a == null ? void 0 : a.attributes.device_class) === "temperature" && Number.isFinite(C(t, o));
+    return o.startsWith("sensor.") && (a == null ? void 0 : a.attributes.device_class) === "temperature" && Number.isFinite(x(t, o));
   });
 }
 function Y(t, n, e, i, r, o, a) {
   const c = z(e, i, r, o), l = {};
-  return { views: V.map((m) => {
+  return { views: H.map((m) => {
     const d = v(m.path, a);
     return l[m.key] = d, {
-      title: S(m.key),
+      title: E(m.key),
       path: d,
       icon: m.icon,
       subview: !0,
       type: "sections",
       max_columns: 3,
-      sections: n[m.key].length > 0 ? q(t, { ...m, title: S(m.key) }, n[m.key], c) : [
+      sections: n[m.key].length > 0 ? q(t, { ...m, title: E(m.key) }, n[m.key], c) : [
         {
           type: "grid",
           cards: [
@@ -274,7 +274,7 @@ function q(t, n, e, i) {
         heading: m,
         heading_style: "subtitle",
         icon: "mdi:chevron-right"
-      }), s.push(...M(t, d));
+      }), s.push(...R(t, d));
     return [
       {
         type: "grid",
@@ -285,7 +285,7 @@ function q(t, n, e, i) {
 }
 function z(t, n, e, i) {
   const r = new Map(n.map((l) => [l.area_id, l])), o = new Map(e.map((l) => [l.id, l])), a = new Map(i.map((l) => [l.floor_id, l])), c = new Map(
-    i.slice().sort(x).map((l, s) => [l.floor_id, s])
+    i.slice().sort($).map((l, s) => [l.floor_id, s])
   );
   return new Map(
     t.map((l) => {
@@ -302,7 +302,7 @@ function z(t, n, e, i) {
     })
   );
 }
-function S(t) {
+function E(t) {
   switch (t) {
     case "lights":
       return "Beleuchtung";
@@ -325,7 +325,7 @@ function j(t) {
   const i = decodeURIComponent(e[e.length - 1] ?? "");
   return t.includes(i) ? `/${e.slice(0, -1).join("/")}` : `/${e.join("/")}`;
 }
-function I(t, n) {
+function M(t, n) {
   const e = t.replace(/\/+$/g, ""), i = n.replace(/^\/+/g, "");
   return `${e}/${i}`;
 }
@@ -377,7 +377,7 @@ function Q(t, n, e) {
         ]
       }
     ];
-  const i = R(t, e), r = [];
+  const i = C(t, e), r = [];
   for (const o of k) {
     const a = i[o.key];
     a.length !== 0 && r.push(Z(t, o, a));
@@ -393,16 +393,16 @@ function Z(t, n, e, i = !0) {
       icon: n.icon
     }
   ] : [];
-  return r.push(...M(t, e)), {
+  return r.push(...R(t, e)), {
     type: "grid",
     cards: r
   };
 }
-function M(t, n) {
+function R(t, n) {
   const e = n.filter(w), i = t ? n.filter((c) => ee(t, c)) : [], r = n.filter(
-    (c) => !w(c) && !i.includes(c) && E(c)
+    (c) => !w(c) && !i.includes(c) && N(c)
   ), o = n.filter(
-    (c) => !w(c) && !i.includes(c) && !E(c)
+    (c) => !w(c) && !i.includes(c) && !N(c)
   ), a = [];
   for (const c of e)
     a.push({
@@ -430,7 +430,7 @@ function M(t, n) {
     entities: o
   }), a;
 }
-function E(t) {
+function N(t) {
   const n = t.split(".")[0] ?? "";
   return [
     "button",
@@ -459,7 +459,7 @@ function ee(t, n) {
   const e = n.split(".")[0] ?? "", i = String(((r = t.states[n]) == null ? void 0 : r.attributes.device_class) ?? "");
   return e === "sensor" && ["temperature", "humidity"].includes(i);
 }
-function R(t, n) {
+function C(t, n) {
   const e = {
     lights: [],
     climate: [],
@@ -485,7 +485,7 @@ function ie(t, n) {
   return e === 0 ? "Alle aus" : `${e} aktiv`;
 }
 function ne(t, n) {
-  const e = n.map((r) => C(t, r)).filter((r) => Number.isFinite(r));
+  const e = n.map((r) => x(t, r)).filter((r) => Number.isFinite(r));
   return e.length === 0 ? "Keine Werte" : `${(e.reduce((r, o) => r + o, 0) / e.length).toFixed(1).replace(".", ",")}°`;
 }
 function re(t, n) {
@@ -504,7 +504,7 @@ function oe(t, n) {
   }).length;
   return e === 0 ? "Keine Wiedergabe" : `${e} Wiedergabe`;
 }
-function C(t, n) {
+function x(t, n) {
   const e = t.states[n], i = ["current_temperature", "temperature"];
   for (const r of i) {
     const o = e == null ? void 0 : e.attributes[r];
@@ -517,7 +517,7 @@ function C(t, n) {
       return r;
   }
 }
-function x(t, n) {
+function $(t, n) {
   return typeof t.level == "number" && typeof n.level == "number" && t.level !== n.level ? t.level - n.level : typeof t.level == "number" ? -1 : typeof n.level == "number" ? 1 : t.name.localeCompare(n.name);
 }
 function ae(t, n = []) {
@@ -537,17 +537,17 @@ function v(t, n) {
     r = `${i}-${o}`, o += 1;
   return e.add(r), r;
 }
-function $(t) {
+function T(t) {
   const n = t.entity_filter ?? {
-    hide_entity_categories: A
+    hide_entity_categories: I
   }, e = new Set(
     t.devices.filter((i) => i.area_id === t.area.area_id).map((i) => i.id)
   );
-  return T(t.entities, n).filter(
+  return B(t.entities, n).filter(
     (i) => i.area_id === t.area.area_id || !i.area_id && i.device_id !== null && i.device_id !== void 0 && e.has(i.device_id)
   ).map((i) => i.entity_id);
 }
-function T(t, n) {
+function B(t, n) {
   const e = new Set(n.hide_entity_categories);
   return t.filter((i) => !i.hidden_by && !i.disabled_by).filter((i) => !i.entity_category || !e.has(i.entity_category));
 }
@@ -555,10 +555,10 @@ function se(t) {
   var e;
   const n = (e = t.entity_filter) == null ? void 0 : e.hide_entity_categories;
   return {
-    hide_entity_categories: Array.isArray(n) ? n : A
+    hide_entity_categories: Array.isArray(n) ? n : I
   };
 }
-function N(t, n) {
+function A(t, n) {
   var e;
   return ((e = t.states[n]) == null ? void 0 : e.attributes.friendly_name) ?? n;
 }
@@ -566,11 +566,11 @@ function y(t) {
   return t.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 function ce() {
-  customElements.define(`ll-strategy-dashboard-${g}`, W), customElements.define(`ll-strategy-view-${g}`, D), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
+  console.info(`[HAStrategy] loaded ${S}`), customElements.define(`ll-strategy-dashboard-${g}`, V), customElements.define(`ll-strategy-view-${g}`, W), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
     type: g,
     strategyType: "dashboard",
     name: "Max Home",
-    description: `Generates an area-based Home Assistant dashboard. Version ${F}.`,
+    description: `Generates an area-based Home Assistant dashboard. Version ${S}.`,
     documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-strategy/"
   });
 }
