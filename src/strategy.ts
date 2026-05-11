@@ -301,13 +301,11 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 
 function createRoomNavigationCard(area: DashboardNavigationItem, dashboardRootPath: string): LovelaceCardConfig {
   const navigationPath = createNavigationPath(dashboardRootPath, area.path);
-  const subtitle = area.subtitle
-    ? `<div style="font-size: 12px; line-height: 1.2; font-weight: 600; margin-top: 4px;">${escapeHtml(area.subtitle)}</div>`
-    : "";
+  const subtitle = area.subtitle ? `<br><span style="font-size: 12px; font-weight: 600;">${escapeHtml(area.subtitle)}</span>` : "";
 
   return {
     type: "markdown",
-    content: `<a href="${escapeHtml(navigationPath)}" style="align-items: center; color: inherit; display: flex; flex-direction: column; justify-content: center; min-height: 94px; text-align: center; text-decoration: none;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color)); margin-bottom: 22px;"></ha-icon><div style="font-size: 12px; font-weight: 700; line-height: 1.2;">${escapeHtml(area.title)}</div>${subtitle}</a>`,
+    content: `<a href="${escapeHtml(navigationPath)}" style="color: inherit; display: block; min-height: 94px; padding-top: 10px; text-align: center; text-decoration: none;"><ha-icon icon="${escapeHtml(area.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color));"></ha-icon><br><br><span style="font-size: 12px; font-weight: 700; line-height: 1.2;">${escapeHtml(area.title)}</span>${subtitle}</a>`,
     grid_options: {
       columns: 4,
       rows: 2,
@@ -358,25 +356,16 @@ function createDashboardSummaryItems(
 }
 
 function createSummaryCard(item: DashboardSummaryItem, dashboardRootPath: string): LovelaceCardConfig {
+  const navigationPath = item.path ? createNavigationPath(dashboardRootPath, item.path) : undefined;
+  const content = `<a href="${escapeHtml(navigationPath ?? "#")}" style="align-items: center; color: inherit; display: flex; gap: 14px; min-height: 48px; text-decoration: none;"><ha-icon icon="${escapeHtml(item.icon)}" style="--mdc-icon-size: 22px; color: var(--state-icon-color, var(--primary-color)); flex: 0 0 auto;"></ha-icon><span style="display: flex; flex-direction: column; line-height: 1.2;"><strong style="font-size: 13px;">${escapeHtml(item.title)}</strong><span style="font-size: 12px;">${escapeHtml(item.subtitle)}</span></span></a>`;
+
   return {
-    type: "button",
-    name: `${item.title}\n${item.subtitle}`,
-    icon: item.icon,
-    icon_height: "22px",
-    show_icon: true,
-    show_name: true,
+    type: "markdown",
+    content,
     grid_options: {
       columns: "full",
       rows: 1,
     },
-    tap_action: item.path
-      ? {
-          action: "navigate",
-          navigation_path: createNavigationPath(dashboardRootPath, item.path),
-        }
-      : {
-          action: "none",
-        },
   };
 }
 
