@@ -376,12 +376,21 @@ function createSummaryButtonCards(items: DashboardSummaryItem[], dashboardRootPa
     type: "button",
     name: `${item.title} ${item.subtitle}`,
     icon: item.icon,
-    icon_height: "20px",
+    icon_height: "8px",
     show_icon: true,
     show_name: true,
+    show_state: false,
     grid_options: {
       columns: 12,
       rows: 1,
+    },
+    card_mod: {
+      style: `
+        ha-card {
+          min-height: 24px;
+          height: 24px;
+        }
+      `,
     },
     tap_action: item.path
       ? {
@@ -685,7 +694,7 @@ function buildAreaSections(
       continue;
     }
 
-    sections.push(createEntityGroupSection(hass, group, groupedEntityIds, cardContext));
+    sections.push(createEntityGroupSection(hass, group, groupedEntityIds, cardContext, !shouldGroupEntitiesByDevice(group.key)));
   }
 
   return sections;

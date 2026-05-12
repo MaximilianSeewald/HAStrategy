@@ -1,11 +1,11 @@
-const g = "max-home-dashboard", k = "0.2.2", I = [
+const g = "max-home-dashboard", M = "0.2.2", C = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
   { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" }
-], V = I.filter((t) => t.path), C = ["config", "diagnostic"];
+], V = C.filter((t) => t.path), R = ["config", "diagnostic"];
 class P extends HTMLElement {
   static getCreateSuggestions(i) {
     return {
@@ -110,7 +110,7 @@ function K(t, i, e, n, r, o, s) {
     i.slice().sort(F).map((c, u) => [c.floor_id, u])
   );
   return t.map((c) => {
-    const u = N(y(c.name || c.area_id), s), m = c.floor_id ? l.get(c.floor_id) : void 0;
+    const u = k(y(c.name || c.area_id), s), m = c.floor_id ? l.get(c.floor_id) : void 0;
     return {
       title: c.name,
       path: u,
@@ -160,7 +160,7 @@ function Y(t, i) {
     },
     tap_action: {
       action: "navigate",
-      navigation_path: R(i, t.path)
+      navigation_path: x(i, t.path)
     }
   };
   return t.stateEntityId && (e.entity = t.stateEntityId), e;
@@ -205,16 +205,25 @@ function z(t, i) {
     type: "button",
     name: `${e.title} ${e.subtitle}`,
     icon: e.icon,
-    icon_height: "20px",
+    icon_height: "8px",
     show_icon: !0,
     show_name: !0,
+    show_state: !1,
     grid_options: {
       columns: 12,
       rows: 1
     },
+    card_mod: {
+      style: `
+        ha-card {
+          min-height: 24px;
+          height: 24px;
+        }
+      `
+    },
     tap_action: e.path ? {
       action: "navigate",
-      navigation_path: R(i, e.path)
+      navigation_path: x(i, e.path)
     } : {
       action: "none"
     }
@@ -229,15 +238,15 @@ function j(t, i, e, n, r) {
 function X(t, i, e, n, r, o, s) {
   const l = Q(e, n, r, o), a = {};
   return { views: V.map((u) => {
-    const m = N(u.path, s);
+    const m = k(u.path, s);
     return a[u.key] = m, {
-      title: M(u.key),
+      title: A(u.key),
       path: m,
       icon: u.icon,
       subview: !0,
       type: "sections",
       max_columns: 3,
-      sections: i[u.key].length > 0 ? J(t, { ...u, title: M(u.key) }, i[u.key], l, {
+      sections: i[u.key].length > 0 ? J(t, { ...u, title: A(u.key) }, i[u.key], l, {
         devices: r,
         entities: e
       }) : [
@@ -283,7 +292,7 @@ function J(t, i, e, n, r) {
         heading: m,
         heading_style: "subtitle",
         icon: "mdi:chevron-right"
-      }), u.push(...B(t, h, r, $(i.key)));
+      }), u.push(...B(t, h, r, N(i.key)));
     return [
       {
         type: "grid",
@@ -311,7 +320,7 @@ function Q(t, i, e, n) {
     })
   );
 }
-function M(t) {
+function A(t) {
   switch (t) {
     case "lights":
       return "Beleuchtung";
@@ -334,7 +343,7 @@ function Z(t) {
   const n = decodeURIComponent(e[e.length - 1] ?? "");
   return t.includes(n) ? `/${e.slice(0, -1).join("/")}` : `/${e.join("/")}`;
 }
-function R(t, i) {
+function x(t, i) {
   const e = t.replace(/\/+$/g, ""), n = i.replace(/^\/+/g, "");
   return `${e}/${n}`;
 }
@@ -387,9 +396,9 @@ function ie(t, i, e, n) {
       }
     ];
   const r = T(t, e), o = [];
-  for (const s of I) {
+  for (const s of C) {
     const l = r[s.key];
-    l.length !== 0 && o.push(ne(t, s, l, n));
+    l.length !== 0 && o.push(ne(t, s, l, n, !N(s.key)));
   }
   return o;
 }
@@ -402,13 +411,13 @@ function ne(t, i, e, n, r = !0) {
       icon: i.icon
     }
   ] : [];
-  return o.push(...B(t, e, n, $(i.key))), {
+  return o.push(...B(t, e, n, N(i.key))), {
     type: "grid",
     cards: o
   };
 }
 function B(t, i, e, n = !1) {
-  return n && e ? re(t, i, e) : x(t, i);
+  return n && e ? re(t, i, e) : $(t, i);
 }
 function re(t, i, e) {
   const n = new Map(e.entities.map((s) => [s.entity_id, s])), r = new Map(e.devices.map((s) => [s.id, s])), o = /* @__PURE__ */ new Map();
@@ -426,18 +435,18 @@ function re(t, i, e) {
       heading_style: "subtitle",
       icon: "mdi:devices"
     },
-    ...x(t, l)
+    ...$(t, l)
   ]);
 }
 function w(t, i, e, n) {
   const r = e.get(t), o = i[0];
   return (r == null ? void 0 : r.name_by_user) ?? (r == null ? void 0 : r.name) ?? (o && n ? E(n, o) : "Weitere");
 }
-function x(t, i) {
+function $(t, i) {
   const e = i.filter(v), n = i.filter(S), r = t ? i.filter((a) => oe(t, a)) : [], o = i.filter(
-    (a) => !v(a) && !S(a) && !r.includes(a) && A(a)
+    (a) => !v(a) && !S(a) && !r.includes(a) && I(a)
   ), s = i.filter(
-    (a) => !v(a) && !S(a) && !r.includes(a) && !A(a)
+    (a) => !v(a) && !S(a) && !r.includes(a) && !I(a)
   ), l = [];
   for (const a of e)
     l.push({
@@ -471,10 +480,10 @@ function x(t, i) {
     entities: s
   }), l;
 }
-function $(t) {
+function N(t) {
   return !["lights", "climate", "security"].includes(t);
 }
-function A(t) {
+function I(t) {
   const i = t.split(".")[0] ?? "";
   return [
     "button",
@@ -573,11 +582,11 @@ function de(t, i = []) {
     const r = y(n.path ?? n.title);
     return {
       ...n,
-      path: N(r, e)
+      path: k(r, e)
     };
   });
 }
-function N(t, i) {
+function k(t, i) {
   const e = i instanceof Set ? i : new Set(i.filter(Boolean)), n = y(t || "view") || "view";
   let r = n, o = 2;
   for (; e.has(r); )
@@ -586,7 +595,7 @@ function N(t, i) {
 }
 function W(t) {
   const i = t.entity_filter ?? {
-    hide_entity_categories: C
+    hide_entity_categories: R
   }, e = new Set(
     t.devices.filter((n) => n.area_id === t.area.area_id).map((n) => n.id)
   );
@@ -602,7 +611,7 @@ function me(t) {
   var e;
   const i = (e = t.entity_filter) == null ? void 0 : e.hide_entity_categories;
   return {
-    hide_entity_categories: Array.isArray(i) ? i : C
+    hide_entity_categories: Array.isArray(i) ? i : R
   };
 }
 function E(t, i) {
@@ -613,11 +622,11 @@ function y(t) {
   return t.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 function pe() {
-  console.info(`[HAStrategy] loaded ${k}`), customElements.define(`ll-strategy-dashboard-${g}`, P), customElements.define(`ll-strategy-view-${g}`, O), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
+  console.info(`[HAStrategy] loaded ${M}`), customElements.define(`ll-strategy-dashboard-${g}`, P), customElements.define(`ll-strategy-view-${g}`, O), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
     type: g,
     strategyType: "dashboard",
     name: "Max Home",
-    description: `Generates an area-based Home Assistant dashboard. Version ${k}.`,
+    description: `Generates an area-based Home Assistant dashboard. Version ${M}.`,
     documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-strategy/"
   });
 }
