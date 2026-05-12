@@ -65,17 +65,7 @@ interface DashboardSummaryItem {
   subtitle: string;
   path?: string;
   icon: string;
-}
-
-interface CompactSummaryButtonConfig {
-  title: string;
-  subtitle: string;
-  icon: string;
-  path?: string;
-}
-
-interface CompactSummaryButtonsCardConfig extends LovelaceCardConfig {
-  items: CompactSummaryButtonConfig[];
+  entityId?: string;
 }
 
 interface ResolvedEntityFilterConfig {
@@ -198,105 +188,6 @@ export class MaxHomeAreaViewStrategy extends HTMLElement {
   }
 }
 
-class CompactSummaryButtonsCard extends HTMLElement {
-  private config?: CompactSummaryButtonsCardConfig;
-  private root = this.attachShadow({ mode: "open" });
-
-  setConfig(config: CompactSummaryButtonsCardConfig): void {
-    this.config = config;
-    this.render();
-  }
-
-  getCardSize(): number {
-    return 1;
-  }
-
-  private render(): void {
-    const items = this.config?.items ?? [];
-
-    this.root.innerHTML = `
-      <style>
-        ha-card {
-          display: grid;
-          gap: 6px;
-          padding: 6px;
-          background: transparent;
-          box-shadow: none;
-        }
-
-        button {
-          align-items: center;
-          background: var(--ha-card-background, var(--card-background-color, #fff));
-          border: 1px solid var(--divider-color);
-          border-radius: var(--ha-card-border-radius, 12px);
-          color: var(--primary-text-color);
-          cursor: pointer;
-          display: grid;
-          font: inherit;
-          gap: 10px;
-          grid-template-columns: 22px 1fr;
-          min-height: 34px;
-          padding: 6px 10px;
-          text-align: left;
-          width: 100%;
-        }
-
-        button:hover {
-          background: var(--secondary-background-color);
-        }
-
-        button:focus-visible {
-          outline: 2px solid var(--primary-color);
-          outline-offset: 2px;
-        }
-
-        button[disabled] {
-          cursor: default;
-          opacity: 0.6;
-        }
-
-        ha-icon {
-          color: var(--primary-color);
-          height: 18px;
-          width: 18px;
-        }
-
-        .label {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      </style>
-      <ha-card>
-        ${items
-          .map(
-            (item, index) => `
-              <button data-index="${index}" ${item.path ? "" : "disabled"}>
-                <ha-icon icon="${escapeHtml(item.icon)}"></ha-icon>
-                <span class="label">${escapeHtml(`${item.title} ${item.subtitle}`)}</span>
-              </button>
-            `,
-          )
-          .join("")}
-      </ha-card>
-    `;
-
-    this.root.querySelectorAll<HTMLButtonElement>("button[data-index]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const index = Number(button.dataset.index);
-        const path = items[index]?.path;
-
-        if (!path) {
-          return;
-        }
-
-        window.history.pushState(null, "", path);
-        window.dispatchEvent(new Event("location-changed"));
-      });
-    });
-  }
-}
-
 function createDashboardView(
   hass: HomeAssistant,
   areas: DashboardNavigationItem[],
@@ -343,7 +234,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          createSummaryButtonsCard(summaryItems, dashboardRootPath),
+          createSummaryFooterButtonsCard(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -458,38 +349,55 @@ function createDashboardSummaryItems(
       subtitle: createLightSummary(hass, groupedEntities.lights),
       path: entityCategoryPaths.lights,
       icon: "mdi:lamps-outline",
+      entityId: groupedEntities.lights[0],
     },
     {
       title: "Raumklima",
       subtitle: createClimateSummary(hass, groupedEntities.climate),
       path: entityCategoryPaths.climate,
       icon: "mdi:home-thermometer-outline",
+      entityId: groupedEntities.climate[0],
     },
     {
       title: "Sicherheit",
       subtitle: createSecuritySummary(hass, groupedEntities.security),
       path: entityCategoryPaths.security,
       icon: "mdi:shield-home-outline",
+      entityId: groupedEntities.security[0],
     },
     {
       title: "Mediaplayer",
       subtitle: createMediaSummary(hass, groupedEntities.media),
       path: entityCategoryPaths.media,
       icon: "mdi:music-box-outline",
+      entityId: groupedEntities.media[0],
     },
     ...categoryItems,
   ];
 }
 
-function createSummaryButtonsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
+function createSummaryFooterButtonsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
   return {
-    type: `custom:${STRATEGY_TYPE}-summary-buttons`,
-    items: items.map((item) => ({
-      title: item.title,
-      subtitle: item.subtitle,
-      icon: item.icon,
-      path: item.path ? createNavigationPath(dashboardRootPath, item.path) : undefined,
-    })),
+    type: "entities",
+    entities: [],
+    footer: {
+      type: "buttons",
+      entities: items.map((item) => ({
+        entity: item.entityId ?? item.path ?? slugify(item.title),
+        name: `${item.title} ${item.subtitle}`,
+        icon: item.icon,
+        show_icon: true,
+        show_name: true,
+        tap_action: item.path
+          ? {
+              action: "navigate",
+              navigation_path: createNavigationPath(dashboardRootPath, item.path),
+            }
+          : {
+              action: "none",
+            },
+      })),
+    },
   };
 }
 
@@ -1200,10 +1108,6 @@ function escapeHtml(value: string): string {
 
 export function registerStrategies(): void {
   console.info(`[HAStrategy] loaded ${STRATEGY_VERSION}`);
-
-  if (!customElements.get(`${STRATEGY_TYPE}-summary-buttons`)) {
-    customElements.define(`${STRATEGY_TYPE}-summary-buttons`, CompactSummaryButtonsCard);
-  }
 
   customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, MaxHomeDashboardStrategy);
   customElements.define(`ll-strategy-view-${STRATEGY_TYPE}`, MaxHomeAreaViewStrategy);
