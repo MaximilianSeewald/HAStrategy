@@ -1,16 +1,65 @@
 # Max Home Dashboard Strategy
 
-A TypeScript Home Assistant dashboard strategy that creates a polished, room-first dashboard with native Lovelace cards.
+A custom Home Assistant dashboard strategy that builds a room-first Lovelace dashboard from your Home Assistant areas, floors, devices, and entities.
 
-The strategy creates:
+## Install In Home Assistant
 
-- a Dashboard overview with floor-grouped room navigation and category summaries
-- a Shopping category that embeds the Ktor shopping-list Lovelace card
-- optional custom category views that can be extended from strategy YAML
-- hidden room subviews for each Home Assistant area
-- grouped room cards for lights, climate, security, media, sensors, and other entities
-- default filtering for Home Assistant configuration and diagnostic entities
-- Home Assistant 2026.5 community dashboard metadata through `window.customStrategies`
+This dashboard includes a Shopping view that uses the shopping-list card and Home Assistant add-on from [KtorFramework](https://github.com/MaximilianSeewald/KtorFramework). Install the KtorFramework Home Assistant pieces first if you want the built-in Shopping view to work.
+
+### 1. Install KtorFramework For Shopping
+
+KtorFramework provides:
+
+- the `Ktor App` Home Assistant add-on, with the default add-on slug `ktor_app`
+- the `custom:ktor-shopping-list-card` Lovelace card
+- the shopping-list backend used by the card
+
+Add `https://github.com/MaximilianSeewald/KtorFramework` to Home Assistant as an add-on repository, install and start `Ktor App`, then add the same repository to HACS as a custom `Dashboard` repository and install the shopping-list card.
+
+Confirm Home Assistant has the card resource:
+
+```yaml
+resources:
+  - url: /hacsfiles/KtorFramework/KtorFramework.js
+    type: module
+```
+
+### 2. Install This Dashboard Strategy
+
+The recommended install path is HACS as a custom dashboard repository.
+
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MaximilianSeewald&repository=HAStrategy&category=dashboard)
+
+Or add it manually:
+
+1. Open HACS in Home Assistant.
+2. Open the three-dot menu and choose **Custom repositories**.
+3. Add this repository URL:
+
+```text
+https://github.com/MaximilianSeewald/HAStrategy
+```
+
+4. Select **Dashboard** as the repository type.
+5. Download **Max Home Dashboard Strategy** from HACS.
+6. Confirm Home Assistant has the strategy resource:
+
+```yaml
+resources:
+  - url: /hacsfiles/HAStrategy/HAStrategy.js
+    type: module
+```
+
+### 3. Create A Dashboard
+
+Create a new dashboard that uses the strategy:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+```
+
+After the resource is loaded, the strategy also registers itself as **Max Home** in Home Assistant's community dashboard suggestions.
 
 ## Strategy Config
 
@@ -45,11 +94,46 @@ strategy:
           content: "Custom cards go here"
 ```
 
-The top navigation contains only Dashboard, Shopping, and custom categories. Rooms and generated entity categories such as Beleuchtung, Raumklima, Sicherheit, and Mediaplayer are subviews opened from the Dashboard buttons.
+The generated dashboard contains:
+
+- a Dashboard overview with rooms grouped by floor
+- category summaries for lighting, climate, security, and media entities
+- a Shopping view powered by KtorFramework
+- hidden room subviews for each Home Assistant area
+- optional custom category views from strategy YAML
+
+### Shopping View
+
+The Shopping view is enabled by default and renders this card:
+
+```yaml
+type: custom:ktor-shopping-list-card
+title: Shopping List
+addon_slug: ktor_app
+show_completed: true
+```
+
+Disable it when KtorFramework is not installed:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  shopping:
+    enabled: false
+```
+
+For a custom deployment, provide a backend URL instead of the add-on slug:
+
+```yaml
+strategy:
+  type: custom:max-home-dashboard
+  shopping:
+    backend_url: /api/hassio_ingress/CURRENT_GENERATED_INGRESS_PATH/
+```
 
 ### Entity Filtering
 
-By default, the strategy hides entity registry entries in Home Assistant's configuration and diagnostic categories:
+By default, the strategy hides entity registry entries in Home Assistant's `config` and `diagnostic` categories:
 
 ```yaml
 strategy:
@@ -69,46 +153,9 @@ strategy:
     hide_entity_categories: []
 ```
 
-### Shopping Category
-
-The Shopping category is enabled by default and uses the Ktor shopping-list card:
-
-```yaml
-type: custom:ktor-shopping-list-card
-title: Shopping List
-addon_slug: ktor_app
-show_completed: true
-```
-
-Install the card separately from the KtorFramework repository through HACS as a dashboard resource:
-
-```yaml
-resources:
-  - url: /hacsfiles/KtorFramework/KtorFramework.js
-    type: module
-```
-
-Disable the built-in Shopping category:
-
-```yaml
-strategy:
-  type: custom:max-home-dashboard
-  shopping:
-    enabled: false
-```
-
-For custom deployments, provide a backend URL instead of the add-on slug:
-
-```yaml
-strategy:
-  type: custom:max-home-dashboard
-  shopping:
-    backend_url: /api/hassio_ingress/CURRENT_GENERATED_INGRESS_PATH/
-```
-
 ### Custom Categories
 
-Add future categories with the `categories` list. The `id` becomes the path unless `path` is provided, and `cards` are passed through as Lovelace card configs.
+Add additional views with the `categories` list. The `id` becomes the path unless `path` is provided, and `cards` are passed through as Lovelace card configs.
 
 ```yaml
 strategy:
@@ -147,48 +194,7 @@ The distributable file is written to:
 dist/HAStrategy.js
 ```
 
-## Install In Home Assistant
-
-The easiest install path is through HACS as a custom dashboard repository. This lets Home Assistant download and update the strategy without manually copying files into `/config/www`.
-
-### HACS Custom Repository
-
-Click this button to open the repository in HACS:
-
-[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MaximilianSeewald&repository=HAStrategy&category=dashboard)
-
-Or add it manually:
-
-1. Open HACS in Home Assistant.
-2. Open the three-dot menu and choose **Custom repositories**.
-3. Add this repository URL:
-
-```text
-https://github.com/MaximilianSeewald/HAStrategy
-```
-
-4. Select **Dashboard** as the repository type.
-5. Download **Max Home Dashboard Strategy** from HACS.
-6. Add the dashboard resource if HACS did not add it automatically:
-
-```yaml
-resources:
-  - url: /hacsfiles/HAStrategy/HAStrategy.js
-    type: module
-```
-
-7. Create a dashboard that uses the strategy:
-
-```yaml
-strategy:
-  type: custom:max-home-dashboard
-```
-
-On Home Assistant 2026.5 or newer, the strategy also registers itself for the new dashboard dialog under Community dashboards after the resource is loaded.
-
-### Development Install
-
-For local development, run `npm.cmd run build` and serve `dist/HAStrategy.js` through your preferred Home Assistant development setup. HACS is still the recommended install method for a normal Home Assistant instance.
+For local Home Assistant development, build the project and serve `dist/HAStrategy.js` through your preferred Home Assistant development setup. HACS is still the recommended install method for a normal Home Assistant instance.
 
 ## Project Layout
 
