@@ -67,6 +67,17 @@ interface DashboardSummaryItem {
   icon: string;
 }
 
+interface CompactSummaryButtonConfig {
+  title: string;
+  subtitle: string;
+  icon: string;
+  path?: string;
+}
+
+interface CompactSummaryButtonsCardConfig extends LovelaceCardConfig {
+  items: CompactSummaryButtonConfig[];
+}
+
 interface ResolvedEntityFilterConfig {
   hide_entity_categories: string[];
 }
@@ -187,6 +198,111 @@ export class MaxHomeAreaViewStrategy extends HTMLElement {
   }
 }
 
+class CompactSummaryButtonsCard extends HTMLElement {
+  private config?: CompactSummaryButtonsCardConfig;
+  private root = this.attachShadow({ mode: "open" });
+
+  setConfig(config: CompactSummaryButtonsCardConfig): void {
+    this.config = config;
+    this.render();
+  }
+
+  getCardSize(): number {
+    return 1;
+  }
+
+  private render(): void {
+    const items = this.config?.items ?? [];
+
+    this.root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+
+        .buttons {
+          display: grid;
+          gap: 8px;
+          grid-template-columns: 1fr;
+        }
+
+        button {
+          align-items: center;
+          background: var(--chip-background-color, rgba(var(--rgb-primary-text-color), 0.15));
+          border: 0;
+          border-radius: 999px;
+          color: var(--primary-text-color);
+          cursor: pointer;
+          display: grid;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 500;
+          gap: 8px;
+          grid-template-columns: 20px 1fr;
+          height: 34px;
+          justify-self: stretch;
+          line-height: 20px;
+          padding: 0 14px;
+          text-align: left;
+          width: 100%;
+        }
+
+        button:hover {
+          background: var(--secondary-background-color);
+        }
+
+        button:focus-visible {
+          outline: 2px solid var(--primary-color);
+          outline-offset: 2px;
+        }
+
+        button[disabled] {
+          cursor: default;
+          opacity: 0.6;
+        }
+
+        ha-icon {
+          color: var(--secondary-text-color);
+          height: 18px;
+          width: 18px;
+        }
+
+        .label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      </style>
+      <div class="buttons">
+        ${items
+          .map(
+            (item, index) => `
+              <button data-index="${index}" ${item.path ? "" : "disabled"}>
+                <ha-icon icon="${escapeHtml(item.icon)}"></ha-icon>
+                <span class="label">${escapeHtml(`${item.title} ${item.subtitle}`)}</span>
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+    `;
+
+    this.root.querySelectorAll<HTMLButtonElement>("button[data-index]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.index);
+        const path = items[index]?.path;
+
+        if (!path) {
+          return;
+        }
+
+        window.history.pushState(null, "", path);
+        window.dispatchEvent(new Event("location-changed"));
+      });
+    });
+  }
+}
+
 function createDashboardView(
   hass: HomeAssistant,
   areas: DashboardNavigationItem[],
@@ -233,7 +349,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          ...createSummaryButtonCards(summaryItems, dashboardRootPath),
+          createSummaryButtonCard(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -371,36 +487,16 @@ function createDashboardSummaryItems(
   ];
 }
 
-function createSummaryButtonCards(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig[] {
-  return items.map((item) => ({
-    type: "button",
-    name: `${item.title} ${item.subtitle}`,
-    icon: item.icon,
-    icon_height: "14px",
-    show_icon: true,
-    show_name: true,
-    show_state: false,
-    grid_options: {
-      columns: 12,
-      rows: 1,
-    },
-    card_mod: {
-      style: `
-        ha-card {
-          min-height: 44px;
-          height: 44px;
-        }
-      `,
-    },
-    tap_action: item.path
-      ? {
-          action: "navigate",
-          navigation_path: createNavigationPath(dashboardRootPath, item.path),
-        }
-      : {
-          action: "none",
-        },
-  }));
+function createSummaryButtonCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
+  return {
+    type: `custom:${STRATEGY_TYPE}-summary-buttons`,
+    items: items.map((item) => ({
+      title: item.title,
+      subtitle: item.subtitle,
+      icon: item.icon,
+      path: item.path ? createNavigationPath(dashboardRootPath, item.path) : undefined,
+    })),
+  };
 }
 
 function getAreaTemperatureEntityId(
@@ -1110,6 +1206,10 @@ function escapeHtml(value: string): string {
 
 export function registerStrategies(): void {
   console.info(`[HAStrategy] loaded ${STRATEGY_VERSION}`);
+
+  if (!customElements.get(`${STRATEGY_TYPE}-summary-buttons`)) {
+    customElements.define(`${STRATEGY_TYPE}-summary-buttons`, CompactSummaryButtonsCard);
+  }
 
   customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, MaxHomeDashboardStrategy);
   customElements.define(`ll-strategy-view-${STRATEGY_TYPE}`, MaxHomeAreaViewStrategy);
