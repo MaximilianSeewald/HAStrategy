@@ -80,40 +80,6 @@ function classifyEntity(hass: HomeAssistant, entityId: string): EntityGroupKey {
   return "other";
 }
 
-export function createLightSummary(hass: HomeAssistant, entityIds: string[]): string {
-  const activeCount = entityIds.filter((entityId) => ["on", "open", "opening"].includes(hass.states[entityId]?.state ?? "")).length;
-
-  return activeCount === 0 ? "Alle aus" : `${activeCount} aktiv`;
-}
-
-export function createClimateSummary(hass: HomeAssistant, entityIds: string[]): string {
-  const temperatures = entityIds
-    .map((entityId) => getEntityTemperature(hass, entityId))
-    .filter((temperature): temperature is number => Number.isFinite(temperature));
-
-  if (temperatures.length === 0) {
-    return "Keine Werte";
-  }
-
-  const average = temperatures.reduce((sum, temperature) => sum + temperature, 0) / temperatures.length;
-
-  return `${average.toFixed(1).replace(".", ",")}°`;
-}
-
-export function createSecuritySummary(hass: HomeAssistant, entityIds: string[]): string {
-  const activeCount = entityIds.filter((entityId) =>
-    ["on", "open", "opening", "unlocked", "triggered", "armed_away", "armed_home"].includes(hass.states[entityId]?.state ?? ""),
-  ).length;
-
-  return activeCount === 0 ? "Alles ruhig" : `${activeCount} aktiv`;
-}
-
-export function createMediaSummary(hass: HomeAssistant, entityIds: string[]): string {
-  const playingCount = entityIds.filter((entityId) => hass.states[entityId]?.state === "playing").length;
-
-  return playingCount === 0 ? "Keine Wiedergabe" : `${playingCount} Wiedergabe`;
-}
-
 export function getEntityTemperature(hass: HomeAssistant, entityId: string): number | undefined {
   const state = hass.states[entityId];
   const temperatureAttributes = ["current_temperature", "temperature"];

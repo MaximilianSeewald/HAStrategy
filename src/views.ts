@@ -18,14 +18,7 @@ import type { EntityCardContext } from "./cards";
 import type { DashboardNavigationItem } from "./navigation";
 import { DASHBOARD_SUMMARY_GROUPS, ENTITY_GROUPS } from "./config";
 import { createEntityCards, createRoomNavigationCard, createSummaryButtonCard } from "./cards";
-import {
-  createClimateSummary,
-  createLightSummary,
-  createMediaSummary,
-  createSecuritySummary,
-  groupEntities,
-  shouldGroupEntitiesByDevice,
-} from "./entities";
+import { groupEntities, shouldGroupEntitiesByDevice } from "./entities";
 import { compareFloors, ensureUniqueViewPaths, slugify, uniquePath } from "./navigation";
 
 export interface EntityCategoryViews {
@@ -35,7 +28,6 @@ export interface EntityCategoryViews {
 
 export interface DashboardSummaryItem {
   title: string;
-  subtitle: string;
   path?: string;
   icon: string;
 }
@@ -51,13 +43,12 @@ export function createDashboardView(
   hass: HomeAssistant,
   areas: DashboardNavigationItem[],
   categories: LovelaceViewConfig[],
-  groupedEntityIds: Record<EntityGroupKey, string[]>,
   entityCategoryPaths: Partial<Record<EntityGroupKey, string>>,
   dashboardRootPath: string,
 ): LovelaceViewConfig {
   const locationName = hass.config.location_name ?? "Home";
   const roomSections = createFloorRoomCards(areas, dashboardRootPath);
-  const summaryItems = createDashboardSummaryItems(hass, categories, groupedEntityIds, entityCategoryPaths);
+  const summaryItems = createDashboardSummaryItems(categories, entityCategoryPaths);
 
   return {
     title: "Dashboard",
@@ -130,14 +121,11 @@ function createFloorRoomCards(areas: DashboardNavigationItem[], dashboardRootPat
 }
 
 function createDashboardSummaryItems(
-  hass: HomeAssistant,
   categories: LovelaceViewConfig[],
-  groupedEntities: Record<EntityGroupKey, string[]>,
   entityCategoryPaths: Partial<Record<EntityGroupKey, string>>,
 ): DashboardSummaryItem[] {
   const categoryItems = categories.map((category) => ({
     title: category.title,
-    subtitle: "Öffnen",
     path: category.path ?? slugify(category.title),
     icon: category.icon ?? "mdi:shape-outline",
   }));
@@ -145,25 +133,21 @@ function createDashboardSummaryItems(
   return [
     {
       title: "Beleuchtung",
-      subtitle: createLightSummary(hass, groupedEntities.lights),
       path: entityCategoryPaths.lights,
       icon: "mdi:lamps-outline",
     },
     {
       title: "Raumklima",
-      subtitle: createClimateSummary(hass, groupedEntities.climate),
       path: entityCategoryPaths.climate,
       icon: "mdi:home-thermometer-outline",
     },
     {
       title: "Sicherheit",
-      subtitle: createSecuritySummary(hass, groupedEntities.security),
       path: entityCategoryPaths.security,
       icon: "mdi:shield-home-outline",
     },
     {
       title: "Mediaplayer",
-      subtitle: createMediaSummary(hass, groupedEntities.media),
       path: entityCategoryPaths.media,
       icon: "mdi:music-box-outline",
     },

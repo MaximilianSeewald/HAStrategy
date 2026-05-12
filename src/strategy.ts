@@ -5,7 +5,9 @@ import type {
   FloorRegistryEntry,
   HomeAssistant,
   LovelaceDashboardConfig,
+  LovelaceDashboardStrategyConstructor,
   LovelaceViewConfig,
+  LovelaceViewStrategyConstructor,
 } from "./home-assistant";
 import type { AreaViewStrategyConfig, DashboardStrategyConfig } from "./config";
 import { STRATEGY_TYPE, STRATEGY_VERSION, resolveEntityFilter } from "./config";
@@ -58,7 +60,7 @@ export class MaxHomeDashboardStrategy extends HTMLElement {
     return {
       title: config.title ?? "Max Home",
       views: [
-        createDashboardView(hass, areaNavigation, categoryViews, groupedEntityIds, entityCategoryViews.pathByKey, dashboardRootPath),
+        createDashboardView(hass, areaNavigation, categoryViews, entityCategoryViews.pathByKey, dashboardRootPath),
         ...categoryViews,
         ...entityCategoryViews.views,
         ...visibleAreas.map((area, index) => {
@@ -105,13 +107,15 @@ export class MaxHomeAreaViewStrategy extends HTMLElement {
 
 export function registerStrategies(): void {
   console.info(`[HAStrategy] loaded ${STRATEGY_VERSION}`);
+  const dashboardStrategy = MaxHomeDashboardStrategy satisfies LovelaceDashboardStrategyConstructor<DashboardStrategyConfig>;
+  const areaViewStrategy = MaxHomeAreaViewStrategy satisfies LovelaceViewStrategyConstructor<AreaViewStrategyConfig>;
 
   if (!customElements.get(`${STRATEGY_TYPE}-summary-buttons`)) {
     customElements.define(`${STRATEGY_TYPE}-summary-buttons`, CompactSummaryButtonsCard);
   }
 
-  customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, MaxHomeDashboardStrategy);
-  customElements.define(`ll-strategy-view-${STRATEGY_TYPE}`, MaxHomeAreaViewStrategy);
+  customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, dashboardStrategy);
+  customElements.define(`ll-strategy-view-${STRATEGY_TYPE}`, areaViewStrategy);
 
   window.customStrategies = window.customStrategies || [];
   window.customStrategies.push({

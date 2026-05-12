@@ -1,4 +1,4 @@
-import type { DeviceRegistryEntry, EntityRegistryEntry, HomeAssistant, LovelaceCardConfig } from "./home-assistant";
+import type { DeviceRegistryEntry, EntityRegistryEntry, HomeAssistant, LovelaceCardConfig, LovelaceCardElement } from "./home-assistant";
 import type { DashboardNavigationItem } from "./navigation";
 import type { DashboardSummaryItem } from "./views";
 import { STRATEGY_TYPE } from "./config";
@@ -7,7 +7,6 @@ import { createNavigationPath } from "./navigation";
 
 interface CompactSummaryButtonConfig {
   title: string;
-  subtitle: string;
   icon: string;
   path?: string;
 }
@@ -21,7 +20,7 @@ export interface EntityCardContext {
   entities: EntityRegistryEntry[];
 }
 
-export class CompactSummaryButtonsCard extends HTMLElement {
+export class CompactSummaryButtonsCard extends HTMLElement implements LovelaceCardElement {
   private config?: CompactSummaryButtonsCardConfig;
   private root = this.attachShadow({ mode: "open" });
 
@@ -102,7 +101,7 @@ export class CompactSummaryButtonsCard extends HTMLElement {
             (item, index) => `
               <button data-index="${index}" ${item.path ? "" : "disabled"}>
                 <ha-icon icon="${escapeHtml(item.icon)}"></ha-icon>
-                <span class="label">${escapeHtml(`${item.title} ${item.subtitle}`)}</span>
+                <span class="label">${escapeHtml(item.title)}</span>
               </button>
             `,
           )
@@ -157,7 +156,6 @@ export function createSummaryButtonCard(items: DashboardSummaryItem[], dashboard
     type: `custom:${STRATEGY_TYPE}-summary-buttons`,
     items: items.map((item) => ({
       title: item.title,
-      subtitle: item.subtitle,
       icon: item.icon,
       path: item.path ? createNavigationPath(dashboardRootPath, item.path) : undefined,
     })),

@@ -76,6 +76,20 @@ export interface LovelaceDashboardConfig {
   views: LovelaceViewConfig[];
 }
 
+export interface LovelaceCardElement extends HTMLElement {
+  setConfig(config: LovelaceCardConfig): void;
+  getCardSize(): number;
+}
+
+export interface LovelaceDashboardStrategyConstructor<TConfig> extends CustomElementConstructor {
+  getCreateSuggestions(hass: HomeAssistant): { title: string; icon: string };
+  generate(config: TConfig, hass: HomeAssistant): Promise<LovelaceDashboardConfig>;
+}
+
+export interface LovelaceViewStrategyConstructor<TConfig> extends CustomElementConstructor {
+  generate(config: TConfig, hass: HomeAssistant): Promise<Pick<LovelaceViewConfig, "sections">>;
+}
+
 export interface StrategyConfig {
   type: string;
   [key: string]: unknown;
