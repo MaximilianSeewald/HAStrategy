@@ -233,7 +233,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          ...createSummaryButtonCards(summaryItems, dashboardRootPath),
+          createSummaryButtonRowsCard(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -371,36 +371,24 @@ function createDashboardSummaryItems(
   ];
 }
 
-function createSummaryButtonCards(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig[] {
-  return items.map((item) => ({
-    type: "button",
-    name: `${item.title} ${item.subtitle}`,
-    icon: item.icon,
-    icon_height: "8px",
-    show_icon: true,
-    show_name: true,
-    show_state: false,
-    grid_options: {
-      columns: 12,
-      rows: 1,
-    },
-    card_mod: {
-      style: `
-        ha-card {
-          min-height: 24px;
-          height: 24px;
-        }
-      `,
-    },
-    tap_action: item.path
-      ? {
-          action: "navigate",
-          navigation_path: createNavigationPath(dashboardRootPath, item.path),
-        }
-      : {
-          action: "none",
-        },
-  }));
+function createSummaryButtonRowsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
+  return {
+    type: "entities",
+    show_header_toggle: false,
+    entities: items.map((item) => ({
+      type: "button",
+      name: `${item.title} ${item.subtitle}`,
+      icon: item.icon,
+      tap_action: item.path
+        ? {
+            action: "navigate",
+            navigation_path: createNavigationPath(dashboardRootPath, item.path),
+          }
+        : {
+            action: "none",
+          },
+    })),
+  };
 }
 
 function getAreaTemperatureEntityId(

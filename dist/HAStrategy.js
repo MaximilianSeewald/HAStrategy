@@ -1,11 +1,11 @@
-const g = "max-home-dashboard", M = "0.2.2", C = [
+const g = "max-home-dashboard", M = "0.2.2", R = [
   { key: "lights", title: "Lights", icon: "mdi:lightbulb-outline", path: "beleuchtung" },
   { key: "climate", title: "Climate", icon: "mdi:thermostat", path: "raumklima" },
   { key: "security", title: "Security", icon: "mdi:shield-home-outline", path: "sicherheit" },
   { key: "media", title: "Media", icon: "mdi:speaker", path: "mediaplayer" },
   { key: "sensors", title: "Sensors", icon: "mdi:gauge" },
   { key: "other", title: "Other", icon: "mdi:dots-grid" }
-], V = C.filter((t) => t.path), R = ["config", "diagnostic"];
+], V = R.filter((t) => t.path), C = ["config", "diagnostic"];
 class P extends HTMLElement {
   static getCreateSuggestions(i) {
     return {
@@ -99,7 +99,7 @@ function L(t, i, e, n, r, o) {
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline"
           },
-          ...z(a, o)
+          z(a, o)
         ]
       }
     ].filter((c) => c.cards.length > 0)
@@ -160,7 +160,7 @@ function Y(t, i) {
     },
     tap_action: {
       action: "navigate",
-      navigation_path: x(i, t.path)
+      navigation_path: B(i, t.path)
     }
   };
   return t.stateEntityId && (e.entity = t.stateEntityId), e;
@@ -201,33 +201,21 @@ function q(t, i, e, n) {
   ];
 }
 function z(t, i) {
-  return t.map((e) => ({
-    type: "button",
-    name: `${e.title} ${e.subtitle}`,
-    icon: e.icon,
-    icon_height: "8px",
-    show_icon: !0,
-    show_name: !0,
-    show_state: !1,
-    grid_options: {
-      columns: 12,
-      rows: 1
-    },
-    card_mod: {
-      style: `
-        ha-card {
-          min-height: 24px;
-          height: 24px;
-        }
-      `
-    },
-    tap_action: e.path ? {
-      action: "navigate",
-      navigation_path: x(i, e.path)
-    } : {
-      action: "none"
-    }
-  }));
+  return {
+    type: "entities",
+    show_header_toggle: !1,
+    entities: t.map((e) => ({
+      type: "button",
+      name: `${e.title} ${e.subtitle}`,
+      icon: e.icon,
+      tap_action: e.path ? {
+        action: "navigate",
+        navigation_path: B(i, e.path)
+      } : {
+        action: "none"
+      }
+    }))
+  };
 }
 function j(t, i, e, n, r) {
   return W({ area: i, devices: e, entities: n, entity_filter: r }).find((o) => {
@@ -292,7 +280,7 @@ function J(t, i, e, n, r) {
         heading: m,
         heading_style: "subtitle",
         icon: "mdi:chevron-right"
-      }), u.push(...B(t, h, r, N(i.key)));
+      }), u.push(...$(t, h, r, N(i.key)));
     return [
       {
         type: "grid",
@@ -343,7 +331,7 @@ function Z(t) {
   const n = decodeURIComponent(e[e.length - 1] ?? "");
   return t.includes(n) ? `/${e.slice(0, -1).join("/")}` : `/${e.join("/")}`;
 }
-function x(t, i) {
+function B(t, i) {
   const e = t.replace(/\/+$/g, ""), n = i.replace(/^\/+/g, "");
   return `${e}/${n}`;
 }
@@ -396,7 +384,7 @@ function ie(t, i, e, n) {
       }
     ];
   const r = T(t, e), o = [];
-  for (const s of C) {
+  for (const s of R) {
     const l = r[s.key];
     l.length !== 0 && o.push(ne(t, s, l, n, !N(s.key)));
   }
@@ -411,13 +399,13 @@ function ne(t, i, e, n, r = !0) {
       icon: i.icon
     }
   ] : [];
-  return o.push(...B(t, e, n, N(i.key))), {
+  return o.push(...$(t, e, n, N(i.key))), {
     type: "grid",
     cards: o
   };
 }
-function B(t, i, e, n = !1) {
-  return n && e ? re(t, i, e) : $(t, i);
+function $(t, i, e, n = !1) {
+  return n && e ? re(t, i, e) : x(t, i);
 }
 function re(t, i, e) {
   const n = new Map(e.entities.map((s) => [s.entity_id, s])), r = new Map(e.devices.map((s) => [s.id, s])), o = /* @__PURE__ */ new Map();
@@ -435,14 +423,14 @@ function re(t, i, e) {
       heading_style: "subtitle",
       icon: "mdi:devices"
     },
-    ...$(t, l)
+    ...x(t, l)
   ]);
 }
 function w(t, i, e, n) {
   const r = e.get(t), o = i[0];
   return (r == null ? void 0 : r.name_by_user) ?? (r == null ? void 0 : r.name) ?? (o && n ? E(n, o) : "Weitere");
 }
-function $(t, i) {
+function x(t, i) {
   const e = i.filter(v), n = i.filter(S), r = t ? i.filter((a) => oe(t, a)) : [], o = i.filter(
     (a) => !v(a) && !S(a) && !r.includes(a) && I(a)
   ), s = i.filter(
@@ -595,7 +583,7 @@ function k(t, i) {
 }
 function W(t) {
   const i = t.entity_filter ?? {
-    hide_entity_categories: R
+    hide_entity_categories: C
   }, e = new Set(
     t.devices.filter((n) => n.area_id === t.area.area_id).map((n) => n.id)
   );
@@ -611,7 +599,7 @@ function me(t) {
   var e;
   const i = (e = t.entity_filter) == null ? void 0 : e.hide_entity_categories;
   return {
-    hide_entity_categories: Array.isArray(i) ? i : R
+    hide_entity_categories: Array.isArray(i) ? i : C
   };
 }
 function E(t, i) {
