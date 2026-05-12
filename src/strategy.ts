@@ -383,7 +383,7 @@ function createSummaryFooterButtonsCard(items: DashboardSummaryItem[], dashboard
     footer: {
       type: "buttons",
       entities: items.map((item) => ({
-        entity: item.entityId ?? item.path ?? slugify(item.title),
+        entity: getSummaryButtonEntityId(item),
         name: `${item.title} ${item.subtitle}`,
         icon: item.icon,
         show_icon: true,
@@ -399,6 +399,16 @@ function createSummaryFooterButtonsCard(items: DashboardSummaryItem[], dashboard
       })),
     },
   };
+}
+
+function getSummaryButtonEntityId(item: DashboardSummaryItem): string {
+  if (item.entityId) {
+    return item.entityId;
+  }
+
+  const objectId = slugify(item.path ?? item.title).replace(/-/g, "_") || "category";
+
+  return `sensor.${objectId}`;
 }
 
 function getAreaTemperatureEntityId(
