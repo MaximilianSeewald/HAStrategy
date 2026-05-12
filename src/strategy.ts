@@ -233,7 +233,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          createSummaryButtonRowsCard(summaryItems, dashboardRootPath),
+          createSummaryLinkRowsCard(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -371,22 +371,15 @@ function createDashboardSummaryItems(
   ];
 }
 
-function createSummaryButtonRowsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
+function createSummaryLinkRowsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
   return {
     type: "entities",
     show_header_toggle: false,
     entities: items.map((item) => ({
-      type: "button",
+      type: "weblink",
       name: `${item.title} ${item.subtitle}`,
       icon: item.icon,
-      tap_action: item.path
-        ? {
-            action: "navigate",
-            navigation_path: createNavigationPath(dashboardRootPath, item.path),
-          }
-        : {
-            action: "none",
-          },
+      url: item.path ? createNavigationPath(dashboardRootPath, item.path) : "#",
     })),
   };
 }

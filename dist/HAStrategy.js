@@ -27,7 +27,7 @@ class P extends HTMLElement {
     return {
       title: i.title ?? "Max Home",
       views: [
-        L(e, m, c, p, f.pathByKey, H),
+        O(e, m, c, p, f.pathByKey, H),
         ...c,
         ...f.views,
         ...a.map((d, _) => {
@@ -52,7 +52,7 @@ class P extends HTMLElement {
     };
   }
 }
-class O extends HTMLElement {
+class L extends HTMLElement {
   static async generate(i, e) {
     const n = W(i).filter((r) => e.states[r]).sort((r, o) => E(e, r).localeCompare(E(e, o)));
     return {
@@ -63,7 +63,7 @@ class O extends HTMLElement {
     };
   }
 }
-function L(t, i, e, n, r, o) {
+function O(t, i, e, n, r, o) {
   const s = t.config.location_name ?? "Home", l = U(i, o), a = q(t, e, n, r);
   return {
     title: "Dashboard",
@@ -110,7 +110,7 @@ function K(t, i, e, n, r, o, s) {
     i.slice().sort(F).map((c, u) => [c.floor_id, u])
   );
   return t.map((c) => {
-    const u = k(y(c.name || c.area_id), s), m = c.floor_id ? l.get(c.floor_id) : void 0;
+    const u = N(y(c.name || c.area_id), s), m = c.floor_id ? l.get(c.floor_id) : void 0;
     return {
       title: c.name,
       path: u,
@@ -205,15 +205,10 @@ function z(t, i) {
     type: "entities",
     show_header_toggle: !1,
     entities: t.map((e) => ({
-      type: "button",
+      type: "weblink",
       name: `${e.title} ${e.subtitle}`,
       icon: e.icon,
-      tap_action: e.path ? {
-        action: "navigate",
-        navigation_path: B(i, e.path)
-      } : {
-        action: "none"
-      }
+      url: e.path ? B(i, e.path) : "#"
     }))
   };
 }
@@ -226,7 +221,7 @@ function j(t, i, e, n, r) {
 function X(t, i, e, n, r, o, s) {
   const l = Q(e, n, r, o), a = {};
   return { views: V.map((u) => {
-    const m = k(u.path, s);
+    const m = N(u.path, s);
     return a[u.key] = m, {
       title: A(u.key),
       path: m,
@@ -280,7 +275,7 @@ function J(t, i, e, n, r) {
         heading: m,
         heading_style: "subtitle",
         icon: "mdi:chevron-right"
-      }), u.push(...$(t, h, r, N(i.key)));
+      }), u.push(...$(t, h, r, k(i.key)));
     return [
       {
         type: "grid",
@@ -386,7 +381,7 @@ function ie(t, i, e, n) {
   const r = T(t, e), o = [];
   for (const s of R) {
     const l = r[s.key];
-    l.length !== 0 && o.push(ne(t, s, l, n, !N(s.key)));
+    l.length !== 0 && o.push(ne(t, s, l, n, !k(s.key)));
   }
   return o;
 }
@@ -399,7 +394,7 @@ function ne(t, i, e, n, r = !0) {
       icon: i.icon
     }
   ] : [];
-  return o.push(...$(t, e, n, N(i.key))), {
+  return o.push(...$(t, e, n, k(i.key))), {
     type: "grid",
     cards: o
   };
@@ -468,7 +463,7 @@ function x(t, i) {
     entities: s
   }), l;
 }
-function N(t) {
+function k(t) {
   return !["lights", "climate", "security"].includes(t);
 }
 function I(t) {
@@ -570,11 +565,11 @@ function de(t, i = []) {
     const r = y(n.path ?? n.title);
     return {
       ...n,
-      path: k(r, e)
+      path: N(r, e)
     };
   });
 }
-function k(t, i) {
+function N(t, i) {
   const e = i instanceof Set ? i : new Set(i.filter(Boolean)), n = y(t || "view") || "view";
   let r = n, o = 2;
   for (; e.has(r); )
@@ -610,7 +605,7 @@ function y(t) {
   return t.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 function pe() {
-  console.info(`[HAStrategy] loaded ${M}`), customElements.define(`ll-strategy-dashboard-${g}`, P), customElements.define(`ll-strategy-view-${g}`, O), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
+  console.info(`[HAStrategy] loaded ${M}`), customElements.define(`ll-strategy-dashboard-${g}`, P), customElements.define(`ll-strategy-view-${g}`, L), window.customStrategies = window.customStrategies || [], window.customStrategies.push({
     type: g,
     strategyType: "dashboard",
     name: "Max Home",
