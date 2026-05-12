@@ -34,6 +34,8 @@ export interface FloorRegistryEntry {
 
 export interface DeviceRegistryEntry {
   id: string;
+  name?: string | null;
+  name_by_user?: string | null;
   area_id?: string | null;
   floor_id?: string | null;
 }

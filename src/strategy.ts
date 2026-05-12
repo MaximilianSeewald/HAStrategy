@@ -179,7 +179,10 @@ export class MaxHomeAreaViewStrategy extends HTMLElement {
       .sort((left, right) => friendlyName(hass, left).localeCompare(friendlyName(hass, right)));
 
     return {
-      sections: buildAreaSections(hass, config.area, entityIds),
+      sections: buildAreaSections(hass, config.area, entityIds, {
+        devices: config.devices,
+        entities: config.entities,
+      }),
     };
   }
 }
@@ -230,7 +233,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          createSummaryRowsCard(summaryItems, dashboardRootPath),
+          ...createSummaryButtonCards(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -368,24 +371,27 @@ function createDashboardSummaryItems(
   ];
 }
 
-function createSummaryRowsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
-  return {
-    type: "entities",
-    show_header_toggle: false,
-    entities: items.map((item) => ({
-      type: "button",
-      name: `${item.title} ${item.subtitle}`,
-      icon: item.icon,
-      tap_action: item.path
-        ? {
-            action: "navigate",
-            navigation_path: createNavigationPath(dashboardRootPath, item.path),
-          }
-        : {
-            action: "none",
-          },
-    })),
-  };
+function createSummaryButtonCards(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig[] {
+  return items.map((item) => ({
+    type: "button",
+    name: `${item.title} ${item.subtitle}`,
+    icon: item.icon,
+    icon_height: "20px",
+    show_icon: true,
+    show_name: true,
+    grid_options: {
+      columns: 12,
+      rows: 1,
+    },
+    tap_action: item.path
+      ? {
+          action: "navigate",
+          navigation_path: createNavigationPath(dashboardRootPath, item.path),
+        }
+      : {
+          action: "none",
+        },
+  }));
 }
 
 function getAreaTemperatureEntityId(
@@ -426,7 +432,10 @@ function createEntityCategoryViews(
       max_columns: 3,
       sections:
         groupedEntityIds[group.key].length > 0
-          ? createLocatedEntitySections(hass, { ...group, title: getLocalizedGroupTitle(group.key) }, groupedEntityIds[group.key], entityLocations)
+          ? createLocatedEntitySections(hass, { ...group, title: getLocalizedGroupTitle(group.key) }, groupedEntityIds[group.key], entityLocations, {
+              devices,
+              entities,
+            })
           : [
               {
                 type: "grid",
@@ -451,11 +460,17 @@ interface EntityLocation {
   sortIndex: number;
 }
 
+interface EntityCardContext {
+  devices: DeviceRegistryEntry[];
+  entities: EntityRegistryEntry[];
+}
+
 function createLocatedEntitySections(
   hass: HomeAssistant,
   group: EntityGroupDefinition,
   entityIds: string[],
   entityLocations: Map<string, EntityLocation>,
+  cardContext: EntityCardContext,
 ): LovelaceSectionConfig[] {
   const groupedByFloor = new Map<string, Map<string, string[]>>();
   const locationByFloor = new Map<string, EntityLocation>();
@@ -498,7 +513,7 @@ function createLocatedEntitySections(
           heading_style: "subtitle",
           icon: "mdi:chevron-right",
         });
-        cards.push(...createEntityCards(hass, areaEntityIds));
+        cards.push(...createEntityCards(hass, areaEntityIds, cardContext, shouldGroupEntitiesByDevice(group.key)));
       }
 
       return [
@@ -640,7 +655,12 @@ function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewCo
   };
 }
 
-function buildAreaSections(hass: HomeAssistant, area: AreaRegistryEntry, entityIds: string[]): LovelaceSectionConfig[] {
+function buildAreaSections(
+  hass: HomeAssistant,
+  area: AreaRegistryEntry,
+  entityIds: string[],
+  cardContext: EntityCardContext,
+): LovelaceSectionConfig[] {
   if (entityIds.length === 0) {
     return [
       {
@@ -665,7 +685,7 @@ function buildAreaSections(hass: HomeAssistant, area: AreaRegistryEntry, entityI
       continue;
     }
 
-    sections.push(createEntityGroupSection(hass, group, groupedEntityIds));
+    sections.push(createEntityGroupSection(hass, group, groupedEntityIds, cardContext));
   }
 
   return sections;
@@ -675,6 +695,7 @@ function createEntityGroupSection(
   hass: HomeAssistant | undefined,
   group: EntityGroupDefinition,
   entityIds: string[],
+  cardContext?: EntityCardContext,
   showHeading = true,
 ): LovelaceSectionConfig {
   const cards: LovelaceCardConfig[] = showHeading
@@ -688,7 +709,7 @@ function createEntityGroupSection(
       ]
     : [];
 
-  cards.push(...createEntityCards(hass, entityIds));
+  cards.push(...createEntityCards(hass, entityIds, cardContext, shouldGroupEntitiesByDevice(group.key)));
 
   return {
     type: "grid",
@@ -696,14 +717,76 @@ function createEntityGroupSection(
   };
 }
 
-function createEntityCards(hass: HomeAssistant | undefined, entityIds: string[]): LovelaceCardConfig[] {
+function createEntityCards(
+  hass: HomeAssistant | undefined,
+  entityIds: string[],
+  cardContext?: EntityCardContext,
+  groupByDevice = false,
+): LovelaceCardConfig[] {
+  if (groupByDevice && cardContext) {
+    return createDeviceGroupedEntityCards(hass, entityIds, cardContext);
+  }
+
+  return createUngroupedEntityCards(hass, entityIds);
+}
+
+function createDeviceGroupedEntityCards(
+  hass: HomeAssistant | undefined,
+  entityIds: string[],
+  cardContext: EntityCardContext,
+): LovelaceCardConfig[] {
+  const entityById = new Map(cardContext.entities.map((entity) => [entity.entity_id, entity]));
+  const deviceById = new Map(cardContext.devices.map((device) => [device.id, device]));
+  const groupedByDevice = new Map<string, string[]>();
+
+  for (const entityId of entityIds) {
+    const registryEntry = entityById.get(entityId);
+    const key = registryEntry?.device_id ?? entityId;
+
+    groupedByDevice.set(key, [...(groupedByDevice.get(key) ?? []), entityId]);
+  }
+
+  return Array.from(groupedByDevice.entries())
+    .sort(([leftKey, leftEntities], [rightKey, rightEntities]) => {
+      const leftName = getDeviceGroupTitle(leftKey, leftEntities, deviceById, hass);
+      const rightName = getDeviceGroupTitle(rightKey, rightEntities, deviceById, hass);
+
+      return leftName.localeCompare(rightName);
+    })
+    .flatMap(([deviceKey, deviceEntityIds]) => [
+      {
+        type: "heading",
+        heading: getDeviceGroupTitle(deviceKey, deviceEntityIds, deviceById, hass),
+        heading_style: "subtitle",
+        icon: "mdi:devices",
+      },
+      ...createUngroupedEntityCards(hass, deviceEntityIds),
+    ]);
+}
+
+function getDeviceGroupTitle(
+  deviceKey: string,
+  entityIds: string[],
+  deviceById: Map<string, DeviceRegistryEntry>,
+  hass: HomeAssistant | undefined,
+): string {
+  const device = deviceById.get(deviceKey);
+  const entityId = entityIds[0];
+
+  return device?.name_by_user ?? device?.name ?? (entityId && hass ? friendlyName(hass, entityId) : "Weitere");
+}
+
+function createUngroupedEntityCards(hass: HomeAssistant | undefined, entityIds: string[]): LovelaceCardConfig[] {
   const cameraEntities = entityIds.filter(isCameraEntity);
+  const mediaPlayerEntities = entityIds.filter(isMediaPlayerEntity);
   const historyEntities = hass ? entityIds.filter((entityId) => shouldRenderAsHistoryGraph(hass, entityId)) : [];
   const tileEntities = entityIds.filter(
-    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && shouldRenderAsTile(entityId),
+    (entityId) =>
+      !isCameraEntity(entityId) && !isMediaPlayerEntity(entityId) && !historyEntities.includes(entityId) && shouldRenderAsTile(entityId),
   );
   const rowEntities = entityIds.filter(
-    (entityId) => !isCameraEntity(entityId) && !historyEntities.includes(entityId) && !shouldRenderAsTile(entityId),
+    (entityId) =>
+      !isCameraEntity(entityId) && !isMediaPlayerEntity(entityId) && !historyEntities.includes(entityId) && !shouldRenderAsTile(entityId),
   );
   const cards: LovelaceCardConfig[] = [];
 
@@ -722,6 +805,13 @@ function createEntityCards(hass: HomeAssistant | undefined, entityIds: string[])
       type: "history-graph",
       hours_to_show: 24,
       entities: historyEntities,
+    });
+  }
+
+  for (const entityId of mediaPlayerEntities) {
+    cards.push({
+      type: "media-control",
+      entity: entityId,
     });
   }
 
@@ -746,6 +836,10 @@ function createEntityCards(hass: HomeAssistant | undefined, entityIds: string[])
   }
 
   return cards;
+}
+
+function shouldGroupEntitiesByDevice(groupKey: EntityGroupKey): boolean {
+  return !["lights", "climate", "security"].includes(groupKey);
 }
 
 function shouldRenderAsTile(entityId: string): boolean {
@@ -773,6 +867,10 @@ function shouldRenderAsTile(entityId: string): boolean {
 
 function isCameraEntity(entityId: string): boolean {
   return entityId.split(".")[0] === "camera";
+}
+
+function isMediaPlayerEntity(entityId: string): boolean {
+  return entityId.split(".")[0] === "media_player";
 }
 
 function shouldRenderAsHistoryGraph(hass: HomeAssistant, entityId: string): boolean {
