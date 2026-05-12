@@ -65,7 +65,6 @@ interface DashboardSummaryItem {
   subtitle: string;
   path?: string;
   icon: string;
-  entityId?: string;
 }
 
 interface ResolvedEntityFilterConfig {
@@ -234,7 +233,7 @@ function createDashboardView(
             heading_style: "subtitle",
             icon: "mdi:view-dashboard-outline",
           },
-          createSummaryFooterButtonsCard(summaryItems, dashboardRootPath),
+          ...createSummaryButtonCards(summaryItems, dashboardRootPath),
         ],
       },
     ].filter((section) => section.cards.length > 0),
@@ -349,66 +348,59 @@ function createDashboardSummaryItems(
       subtitle: createLightSummary(hass, groupedEntities.lights),
       path: entityCategoryPaths.lights,
       icon: "mdi:lamps-outline",
-      entityId: groupedEntities.lights[0],
     },
     {
       title: "Raumklima",
       subtitle: createClimateSummary(hass, groupedEntities.climate),
       path: entityCategoryPaths.climate,
       icon: "mdi:home-thermometer-outline",
-      entityId: groupedEntities.climate[0],
     },
     {
       title: "Sicherheit",
       subtitle: createSecuritySummary(hass, groupedEntities.security),
       path: entityCategoryPaths.security,
       icon: "mdi:shield-home-outline",
-      entityId: groupedEntities.security[0],
     },
     {
       title: "Mediaplayer",
       subtitle: createMediaSummary(hass, groupedEntities.media),
       path: entityCategoryPaths.media,
       icon: "mdi:music-box-outline",
-      entityId: groupedEntities.media[0],
     },
     ...categoryItems,
   ];
 }
 
-function createSummaryFooterButtonsCard(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig {
-  return {
-    type: "entities",
-    entities: [],
-    footer: {
-      type: "buttons",
-      entities: items.map((item) => ({
-        entity: getSummaryButtonEntityId(item),
-        name: `${item.title} ${item.subtitle}`,
-        icon: item.icon,
-        show_icon: true,
-        show_name: true,
-        tap_action: item.path
-          ? {
-              action: "navigate",
-              navigation_path: createNavigationPath(dashboardRootPath, item.path),
-            }
-          : {
-              action: "none",
-            },
-      })),
+function createSummaryButtonCards(items: DashboardSummaryItem[], dashboardRootPath: string): LovelaceCardConfig[] {
+  return items.map((item) => ({
+    type: "button",
+    name: `${item.title} ${item.subtitle}`,
+    icon: item.icon,
+    icon_height: "14px",
+    show_icon: true,
+    show_name: true,
+    show_state: false,
+    grid_options: {
+      columns: 12,
+      rows: 1,
     },
-  };
-}
-
-function getSummaryButtonEntityId(item: DashboardSummaryItem): string {
-  if (item.entityId) {
-    return item.entityId;
-  }
-
-  const objectId = slugify(item.path ?? item.title).replace(/-/g, "_") || "category";
-
-  return `sensor.${objectId}`;
+    card_mod: {
+      style: `
+        ha-card {
+          min-height: 44px;
+          height: 44px;
+        }
+      `,
+    },
+    tap_action: item.path
+      ? {
+          action: "navigate",
+          navigation_path: createNavigationPath(dashboardRootPath, item.path),
+        }
+      : {
+          action: "none",
+        },
+  }));
 }
 
 function getAreaTemperatureEntityId(
