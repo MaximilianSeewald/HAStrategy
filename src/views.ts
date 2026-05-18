@@ -345,11 +345,42 @@ export function createCategoryViews(config: DashboardStrategyConfig): LovelaceVi
 }
 
 function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewConfig {
-  const card: LovelaceCardConfig = {
+  const shoppingCard = createKtorAppCard(config, {
     type: "custom:ktor-shopping-list-card",
     title: "Shopping List",
-    addon_slug: config.addon_slug ?? "ktor_app",
     show_completed: config.show_completed ?? true,
+  });
+  const recipeCard = createKtorAppCard(config, {
+    type: "custom:ktor-recipe-list-card",
+    title: "Recipes",
+  });
+
+  return {
+    title: config.title ?? "Shopping",
+    path: config.path ?? "shopping",
+    icon: config.icon ?? "mdi:cart-outline",
+    type: "sections",
+    max_columns: 2,
+    sections: [
+      {
+        type: "grid",
+        cards: [shoppingCard],
+      },
+      {
+        type: "grid",
+        cards: [recipeCard],
+      },
+    ],
+  };
+}
+
+function createKtorAppCard(
+  config: ShoppingCategoryConfig,
+  cardConfig: LovelaceCardConfig,
+): LovelaceCardConfig {
+  const card: LovelaceCardConfig = {
+    addon_slug: config.addon_slug ?? "ktor_app",
+    ...cardConfig,
   };
 
   if (config.backend_url) {
@@ -357,13 +388,7 @@ function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewCo
     card.backend_url = config.backend_url;
   }
 
-  return {
-    title: config.title ?? "Shopping",
-    path: config.path ?? "shopping",
-    icon: config.icon ?? "mdi:cart-outline",
-    panel: true,
-    cards: [card],
-  };
+  return card;
 }
 
 export function buildAreaSections(
