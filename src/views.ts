@@ -359,18 +359,13 @@ function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewCo
     title: config.title ?? "Shopping",
     path: config.path ?? "shopping",
     icon: config.icon ?? "mdi:cart-outline",
-    type: "sections",
-    max_columns: 4,
-    sections: [
+    panel: true,
+    cards: [
       {
         type: "grid",
-        column_span: 2,
-        cards: [shoppingCard],
-      },
-      {
-        type: "grid",
-        column_span: 2,
-        cards: [recipeCard],
+        columns: 2,
+        square: false,
+        cards: [shoppingCard, recipeCard],
       },
     ],
   };
