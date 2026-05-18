@@ -11,10 +11,10 @@ This dashboard includes a Shopping view that uses the shopping-list card and Hom
 KtorFramework provides:
 
 - the `Ktor App` Home Assistant add-on, with the default add-on slug `ktor_app`
-- the `custom:ktor-shopping-list-card` Lovelace card
-- the shopping-list backend used by the card
+- the `custom:ktor-shopping-list-card` and `custom:ktor-recipe-list-card` Lovelace cards
+- the shopping-list and recipe-list backend used by the cards
 
-Add `https://github.com/MaximilianSeewald/KtorFramework` to Home Assistant as an add-on repository, install and start `Ktor App`, then add the same repository to HACS as a custom `Dashboard` repository and install the shopping-list card.
+Add `https://github.com/MaximilianSeewald/KtorFramework` to Home Assistant as an add-on repository, install and start `Ktor App`, then add the same repository to HACS as a custom `Dashboard` repository and install the shopping-list and recipe-list cards.
 
 Confirm Home Assistant has the card resource:
 
@@ -98,19 +98,23 @@ The generated dashboard contains:
 
 - a Dashboard overview with rooms grouped by floor
 - category summaries for lighting, climate, security, and media entities
-- a Shopping view powered by KtorFramework
+- a Shopping view powered by KtorFramework with shopping-list and recipe-list cards
 - hidden room subviews for each Home Assistant area
 - optional custom category views from strategy YAML
 
 ### Shopping View
 
-The Shopping view is enabled by default and renders this card:
+The Shopping view is enabled by default and renders these cards side by side:
 
 ```yaml
 type: custom:ktor-shopping-list-card
 title: Shopping List
 addon_slug: ktor_app
 show_completed: true
+
+type: custom:ktor-recipe-list-card
+title: Recipes
+addon_slug: ktor_app
 ```
 
 Disable it when KtorFramework is not installed:
