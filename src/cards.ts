@@ -15,6 +15,10 @@ interface CompactSummaryButtonsCardConfig extends LovelaceCardConfig {
   items: CompactSummaryButtonConfig[];
 }
 
+interface WideCardsCardConfig extends LovelaceCardConfig {
+  cards: LovelaceCardConfig[];
+}
+
 export interface EntityCardContext {
   devices: DeviceRegistryEntry[];
   entities: EntityRegistryEntry[];
@@ -122,6 +126,96 @@ export class CompactSummaryButtonsCard extends HTMLElement implements LovelaceCa
         window.dispatchEvent(new Event("location-changed"));
       });
     });
+  }
+}
+
+export class WideCardsCard extends HTMLElement implements LovelaceCardElement {
+  private config?: WideCardsCardConfig;
+  private currentHass?: HomeAssistant;
+  private root = this.attachShadow({ mode: "open" });
+
+  setConfig(config: WideCardsCardConfig): void {
+    this.config = config;
+    this.render();
+  }
+
+  set hass(hass: HomeAssistant) {
+    this.currentHass = hass;
+    this.propagateHass();
+  }
+
+  getCardSize(): number {
+    return 8;
+  }
+
+  private render(): void {
+    const cards = this.config?.cards ?? [];
+
+    this.root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          width: 100%;
+        }
+
+        .layout {
+          box-sizing: border-box;
+          display: grid;
+          gap: 24px;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+          margin: 0 auto;
+          padding: 24px;
+          width: 100%;
+        }
+
+        .layout > * {
+          min-width: 0;
+          width: 100%;
+        }
+
+        @media (max-width: 720px) {
+          .layout {
+            gap: 16px;
+            grid-template-columns: 1fr;
+            padding: 12px;
+          }
+        }
+      </style>
+      <div class="layout"></div>
+    `;
+
+    const layout = this.root.querySelector<HTMLDivElement>(".layout");
+
+    for (const cardConfig of cards) {
+      const elementName = cardConfig.type.replace(/^custom:/, "");
+      const element = document.createElement(elementName) as LovelaceCardElement & { hass?: HomeAssistant };
+
+      layout?.appendChild(element);
+
+      if (typeof element.setConfig === "function") {
+        element.setConfig(cardConfig);
+      } else {
+        customElements.whenDefined(elementName).then(() => {
+          element.setConfig(cardConfig);
+
+          if (this.currentHass) {
+            element.hass = this.currentHass;
+          }
+        });
+      }
+
+      if (this.currentHass) {
+        element.hass = this.currentHass;
+      }
+    }
+  }
+
+  private propagateHass(): void {
+    this.root
+      .querySelectorAll<LovelaceCardElement & { hass?: HomeAssistant }>(".layout > *")
+      .forEach((element) => {
+        element.hass = this.currentHass;
+      });
   }
 }
 

@@ -11,7 +11,7 @@ import type {
 } from "./home-assistant";
 import type { AreaViewStrategyConfig, DashboardStrategyConfig } from "./config";
 import { STRATEGY_TYPE, STRATEGY_VERSION, resolveEntityFilter } from "./config";
-import { CompactSummaryButtonsCard } from "./cards";
+import { CompactSummaryButtonsCard, WideCardsCard } from "./cards";
 import { friendlyName, getEntitiesForArea, getVisibleEntities, groupEntities } from "./entities";
 import { createAreaNavigation, getDashboardRootPath, slugify } from "./navigation";
 import { buildAreaSections, createCategoryViews, createDashboardView, createEntityCategoryViews } from "./views";
@@ -112,6 +112,10 @@ export function registerStrategies(): void {
 
   if (!customElements.get(`${STRATEGY_TYPE}-summary-buttons`)) {
     customElements.define(`${STRATEGY_TYPE}-summary-buttons`, CompactSummaryButtonsCard);
+  }
+
+  if (!customElements.get(`${STRATEGY_TYPE}-wide-cards`)) {
+    customElements.define(`${STRATEGY_TYPE}-wide-cards`, WideCardsCard);
   }
 
   customElements.define(`ll-strategy-dashboard-${STRATEGY_TYPE}`, dashboardStrategy);

@@ -16,7 +16,7 @@ import type {
 } from "./config";
 import type { EntityCardContext } from "./cards";
 import type { DashboardNavigationItem } from "./navigation";
-import { DASHBOARD_SUMMARY_GROUPS, ENTITY_GROUPS } from "./config";
+import { DASHBOARD_SUMMARY_GROUPS, ENTITY_GROUPS, STRATEGY_TYPE } from "./config";
 import { createEntityCards, createRoomNavigationCard, createSummaryButtonCard } from "./cards";
 import { groupEntities, shouldGroupEntitiesByDevice } from "./entities";
 import { compareFloors, ensureUniqueViewPaths, slugify, uniquePath } from "./navigation";
@@ -362,9 +362,7 @@ function createShoppingView(config: ShoppingCategoryConfig = {}): LovelaceViewCo
     panel: true,
     cards: [
       {
-        type: "grid",
-        columns: 2,
-        square: false,
+        type: `custom:${STRATEGY_TYPE}-wide-cards`,
         cards: [shoppingCard, recipeCard],
       },
     ],
